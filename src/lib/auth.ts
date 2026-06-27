@@ -3,6 +3,7 @@ export type UserRole = "owner" | "moderator";
 export type AuthUser = {
   username: string;
   role: UserRole;
+  login?: string;
   roleName: string;
   canOpenAdmin: boolean;
   canManageUsers: boolean;

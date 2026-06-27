@@ -10,7 +10,8 @@ import styles from "./changelog-admin.module.css";
 type EditorTab = "updates" | "fixes";
 
 type AdminChangelogPost = ChangelogPost & {
-  description?: string;
+  updatesHtml?: string;
+  fixesHtml?: string;
 };
 
 function getNowInputValue() {
@@ -29,15 +30,21 @@ function arrayToHtmlList(value: string[]) {
   return `<ul>${value.map((item) => `<li>${item}</li>`).join("")}</ul>`;
 }
 
-function htmlToLines(html: string) {
+function htmlToLines(html: string): string[] {
   if (!html) return [];
+
+  if (typeof document === "undefined") {
+    return html
+      .replace(/<\/?(li|p|div|h1|h2|h3|h4|h5|h6)[^>]*>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
 
   const div = document.createElement("div");
   div.innerHTML = html;
-
-  div.querySelectorAll("br").forEach((br) => {
-    br.replaceWith("\n");
-  });
 
   div
     .querySelectorAll("li, p, div, h1, h2, h3, h4, h5, h6")
@@ -86,7 +93,7 @@ export default function AdminChangelogPage() {
     return {
       id: editingId || "preview",
       title: title || "Без названия",
-      description,
+      description: description || "Предпросмотр обновления",
       publishedAt,
       updates: htmlToLines(updatesHtml),
       fixes: htmlToLines(fixesHtml),
@@ -94,7 +101,6 @@ export default function AdminChangelogPage() {
       fixesHtml,
     };
   }, [editingId, title, description, publishedAt, updatesHtml, fixesHtml]);
-
   async function loadPosts() {
     const response = await fetch("/api/admin/changelog", {
       cache: "no-store",
