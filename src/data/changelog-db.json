@@ -1,0 +1,71 @@
+[
+  {
+    "id": "15cc462d-1fda-496c-ad62-e9e472c93092",
+    "title": "Patch Note 0.0.6",
+    "description": "",
+    "publishedAt": "2026-06-28T00:13",
+    "updates": [
+      "Добавлено новое обновление.",
+      "Добавлено новое обновление.",
+      "Добавлено новое обновление.",
+      "Добавлено новое обновление.",
+      "Добавлено новое обновление.",
+      "Добавлено новое обновление.",
+      "Добавлено новое обновление."
+    ],
+    "fixes": [
+      "Исправлена ошибка."
+    ],
+    "updatesHtml": "<ul><li><p>Добавлено новое обновление.</p></li><li><p>Добавлено новое обновление.</p></li><li><p>Добавлено новое обновление.</p></li><li><p>Добавлено новое обновление.</p></li><li><p>Добавлено новое обновление.</p></li><li><p>Добавлено новое обновление.</p></li><li><p>Добавлено новое обновление.</p></li></ul><p></p>",
+    "fixesHtml": "<ul><li>Исправлена ошибка.</li></ul>"
+  },
+  {
+    "id": "fcf30746-0472-455a-997a-ca7a20419977",
+    "title": "Patch Note 0.0.6",
+    "description": "",
+    "publishedAt": "2026-06-28T00:11",
+    "updates": [
+      "Добавлено новое обновление.",
+      "ffffffff",
+      "fffffff",
+      "fffffffff"
+    ],
+    "fixes": [
+      "Исправлена ошибка.",
+      "ffffff",
+      "ffffff",
+      "ffff",
+      "fffff"
+    ],
+    "updatesHtml": "<ul><li><p>Добавлено новое обновление.</p></li></ul><p>ffffffff</p><p>fffffff</p><p>fffffffff</p>",
+    "fixesHtml": "<ul><li><p>Исправлена ошибка.</p></li></ul><p>ffffff</p><p>ffffff</p><p>ffff</p><p>fffff</p>"
+  },
+  {
+    "id": "91bdf221-ae86-4c96-8b3f-f8b162509a52",
+    "title": "Patch Note 0.0.7",
+    "description": "",
+    "publishedAt": "2026-06-28T00:04",
+    "updates": [
+      "Добавлено новое обновление."
+    ],
+    "fixes": [
+      "Исправлена ошибка."
+    ],
+    "updatesHtml": "<ul><li><p>Добавлено новое обновление.</p></li></ul><p>ddddddddddddd</p><p>ddddddddd<br>ffffffffffffffffffff</p><p>ffffffffffffffffffffff</p>",
+    "fixesHtml": "<ul><li><p>Исправлена ошибка.</p></li></ul><p>fgfgfgfgfgfgfg<br>fffffffffffffff<br>fffffffffffffffffffffffff</p>"
+  },
+  {
+    "id": "58179de4-ff4c-47f1-85be-20949547b739",
+    "title": "Patch Note 0.1.0",
+    "description": "",
+    "publishedAt": "",
+    "updates": [
+      "Добавлено новое обновление."
+    ],
+    "fixes": [
+      "Исправлена ошибка."
+    ],
+    "updatesHtml": "<ul><li>Добавлено новое обновление.</li></ul>",
+    "fixesHtml": "<ul><li>Исправлена ошибка.</li></ul>"
+  }
+]

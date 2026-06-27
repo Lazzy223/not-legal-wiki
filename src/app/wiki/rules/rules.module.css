@@ -1,0 +1,547 @@
+.page {
+  min-height: 100vh;
+  padding-bottom: 90px;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 139, 43, 0.18), transparent 28%),
+    radial-gradient(circle at 82% 14%, rgba(139, 92, 246, 0.18), transparent 30%),
+    radial-gradient(circle at 48% 85%, rgba(34, 197, 94, 0.08), transparent 30%),
+    #070910;
+  color: #f8fafc;
+  overflow-x: hidden;
+}
+
+.topbar {
+  width: min(1320px, calc(100% - 70px));
+  height: 86px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr minmax(360px, 560px) 1fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.logo span {
+  color: #ff8b2b;
+  font-size: 22px;
+  text-shadow: 0 0 22px rgba(255, 139, 43, 0.75);
+}
+
+.search {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(14px);
+  transition: 0.2s;
+}
+
+.search:focus-within {
+  border-color: rgba(255, 139, 43, 0.7);
+  box-shadow: 0 0 36px rgba(255, 139, 43, 0.16);
+}
+
+.search span {
+  color: #ff8b2b;
+  font-size: 20px;
+}
+
+.search input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.search input::placeholder {
+  color: #b9bbc7;
+}
+
+.backButton {
+  justify-self: end;
+  padding: 13px 18px;
+  color: #ffd4a3;
+  background: rgba(255, 139, 43, 0.12);
+  border: 1px solid rgba(255, 139, 43, 0.38);
+  font-size: 13px;
+  font-weight: 1000;
+  transition: 0.2s;
+}
+
+.backButton:hover {
+  background: rgba(255, 139, 43, 0.22);
+  transform: translateY(-2px);
+}
+
+.hero {
+  position: relative;
+  width: min(1320px, calc(100% - 70px));
+  min-height: 390px;
+  margin: 24px auto 54px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: center;
+}
+
+.heroGlow {
+  position: absolute;
+  inset: 30px 8%;
+  background:
+    radial-gradient(circle at 30% 45%, rgba(255, 139, 43, 0.24), transparent 34%),
+    radial-gradient(circle at 70% 45%, rgba(139, 92, 246, 0.2), transparent 34%);
+  filter: blur(38px);
+  pointer-events: none;
+}
+
+.heroContent,
+.heroCard {
+  position: relative;
+  z-index: 2;
+}
+
+.heroBadge {
+  width: fit-content;
+  margin-bottom: 22px;
+  padding: 9px 13px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.42);
+  color: #fca5a5;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(58px, 8vw, 110px);
+  line-height: 0.92;
+  font-weight: 1000;
+  letter-spacing: -4px;
+}
+
+.hero h1 span {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.72);
+}
+
+.hero p {
+  max-width: 760px;
+  margin: 28px 0 0;
+  color: #c7c9d5;
+  font-size: 18px;
+  line-height: 1.62;
+  font-weight: 800;
+}
+
+.heroCard {
+  min-height: 240px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 139, 43, 0.26), transparent 42%),
+    rgba(18, 21, 32, 0.86);
+  border: 1px solid rgba(255, 139, 43, 0.28);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.heroCard span {
+  color: #ffd84b;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.heroCard b {
+  margin-top: 12px;
+  color: white;
+  font-size: 92px;
+  line-height: 1;
+  font-weight: 1000;
+}
+
+.heroCard p {
+  margin: 8px 0 0;
+  color: #b9bbc7;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.layout {
+  width: min(1320px, calc(100% - 70px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 390px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.sidebar {
+  position: sticky;
+  top: 20px;
+}
+
+.sidebarTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sidebarTitle span {
+  color: #ff8b2b;
+  font-size: 28px;
+  font-weight: 1000;
+}
+
+.sidebarTitle b {
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.tabs {
+  display: grid;
+  gap: 8px;
+}
+
+.tabButton {
+  width: 100%;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 14px;
+  cursor: pointer;
+  color: white;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: 0.2s;
+}
+
+.tabButton:hover,
+.tabButtonActive {
+  border-color: rgba(255, 139, 43, 0.55);
+  background:
+    linear-gradient(135deg, rgba(255, 139, 43, 0.14), rgba(255, 255, 255, 0.035)),
+    rgba(24, 28, 42, 0.96);
+  transform: translateX(4px);
+}
+
+.tabIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 139, 43, 0.14);
+  border: 1px solid rgba(255, 139, 43, 0.34);
+  font-size: 22px;
+}
+
+.tabButton span {
+  display: block;
+  color: #ff8b2b;
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.tabButton b {
+  display: block;
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 1000;
+}
+
+.tabButton p {
+  margin: 4px 0 0;
+  color: #b9bbc7;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.content {
+  min-height: 600px;
+}
+
+.contentHeader {
+  position: relative;
+  margin-bottom: 18px;
+  padding: 28px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 139, 43, 0.16), transparent 38%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.contentHeader span {
+  color: #ff8b2b;
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.contentHeader h2 {
+  margin: 7px 0 9px;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 1000;
+}
+
+.contentHeader p {
+  max-width: 720px;
+  margin: 0;
+  color: #b9bbc7;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 800;
+}
+
+.contentIcon {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 139, 43, 0.14);
+  border: 1px solid rgba(255, 139, 43, 0.34);
+  font-size: 32px;
+}
+
+.rulesBlocks {
+  display: grid;
+  gap: 14px;
+}
+
+.ruleBlock {
+  position: relative;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.ruleBlock::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20px;
+  bottom: 20px;
+  width: 4px;
+  background: #ff8b2b;
+}
+
+.blockNumber {
+  position: absolute;
+  right: 18px;
+  top: 10px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 139, 43, 0.5);
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 1000;
+  opacity: 0.42;
+}
+
+.ruleBlock h3 {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 16px;
+  font-size: 23px;
+  font-weight: 1000;
+}
+
+.ruleBlock ul {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.ruleBlock li {
+  color: #c7c9d5;
+  font-size: 15px;
+  line-height: 1.58;
+  font-weight: 800;
+}
+
+.ruleBlock li::marker {
+  color: #ff8b2b;
+}
+
+.empty {
+  padding: 24px;
+  color: #c7c9d5;
+  background: rgba(18, 21, 32, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 900;
+}
+
+@media (max-width: 1100px) {
+  .hero,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar,
+  .hero,
+  .layout {
+    width: calc(100% - 28px);
+  }
+
+  .topbar {
+    height: auto;
+    padding: 18px 0;
+    grid-template-columns: 1fr;
+  }
+
+  .backButton {
+    justify-self: start;
+  }
+
+  .hero h1 {
+    font-size: 54px;
+  }
+
+  .contentHeader {
+    flex-direction: column;
+  }
+}
+.upButton {
+  position: fixed;
+  left: 26px;
+  bottom: 26px;
+  z-index: 50;
+
+  width: 56px;
+  height: 56px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(255, 139, 43, 0.55);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 216, 75, 0.28), transparent 38%),
+    rgba(18, 21, 32, 0.92);
+
+  color: #ffd84b;
+  font-size: 28px;
+  font-weight: 1000;
+
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.35);
+  transition: 0.22s;
+}
+
+.upButton:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 216, 75, 0.85);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 216, 75, 0.38), transparent 42%),
+    rgba(28, 31, 44, 0.96);
+  box-shadow: 0 18px 58px rgba(255, 139, 43, 0.22);
+}
+
+.upButton:active {
+  transform: translateY(-2px) scale(0.96);
+}
+
+@media (max-width: 720px) {
+  .upButton {
+    left: 16px;
+    bottom: 16px;
+    width: 50px;
+    height: 50px;
+    font-size: 25px;
+  }
+}
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adminButton {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
+  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
+  border: 1px solid rgba(255, 216, 75, 0.65);
+  font-size: 13px;
+  font-weight: 1000;
+  box-shadow: 0 0 28px rgba(255, 139, 43, 0.25);
+  transition: 0.2s;
+}
+
+.adminButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 42px rgba(255, 139, 43, 0.42);
+}
+
+@media (max-width: 720px) {
+  .topActions {
+    width: 100%;
+  }
+
+  .topActions a {
+    flex: 1;
+  }
+}
+.richRulesContent {
+  padding: 26px;
+  background: rgba(7, 9, 16, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.richRulesContent ul {
+  list-style-type: disc;
+}
+
+.richRulesContent li::marker {
+  color: #ff8b2b;
+  font-size: 0.85em;
+}
+
+.richRulesContent ol li::marker {
+  color: #ff8b2b;
+  font-weight: 1000;
+}

@@ -1,0 +1,182 @@
+.savedHeadActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.savedHeadActions button {
+  min-height: 25px;
+  padding: 0 9px;
+
+  color: #fecaca;
+  background: rgba(239, 27, 27, 0.08);
+  border: 1px solid rgba(239, 27, 27, 0.26);
+  border-radius: 7px;
+
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  transition: 0.2s;
+}
+
+.savedHeadActions button:hover {
+  color: white;
+  background: rgba(239, 27, 27, 0.18);
+  border-color: rgba(239, 27, 27, 0.46);
+}
+
+.savedItem {
+  display: grid;
+  grid-template-columns: 1fr 32px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.savedItem + .savedItem {
+  margin-top: 8px;
+}
+
+.savedItem a {
+  padding: 10px 11px;
+
+  color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 9px;
+
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 750;
+  transition: 0.2s;
+}
+
+.savedItem a:hover {
+  color: white;
+  border-color: rgba(239, 27, 27, 0.45);
+  background: rgba(239, 27, 27, 0.08);
+}
+
+.savedItem button {
+  display: grid;
+  place-items: center;
+
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 9px;
+
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: 0.2s;
+}
+
+.savedItem button:hover {
+  color: white;
+  background: rgba(239, 27, 27, 0.16);
+  border-color: rgba(239, 27, 27, 0.48);
+}
+/* ===== FIX SAVED POSTS DROPDOWN ===== */
+
+.savedDropdown {
+  position: fixed !important;
+  top: 82px !important;
+  right: 56px !important;
+  z-index: 2147483000 !important;
+
+  width: 360px;
+  max-height: min(520px, calc(100vh - 110px));
+  overflow-y: auto;
+
+  isolation: isolate;
+}
+
+.savedItem {
+  position: relative;
+  display: block !important;
+}
+
+.savedItem + .savedItem {
+  margin-top: 8px;
+}
+
+.savedItem a {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 48px 11px 12px !important;
+
+  display: flex;
+  align-items: center;
+
+  color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 10px;
+
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 750;
+
+  transition: 0.2s;
+}
+
+.savedItem a:hover {
+  color: white;
+  border-color: rgba(239, 27, 27, 0.45);
+  background: rgba(239, 27, 27, 0.08);
+}
+
+.savedItem button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  z-index: 5;
+
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  color: #fecaca;
+  background: rgba(239, 27, 27, 0.08);
+  border: 1px solid rgba(239, 27, 27, 0.24);
+  border-radius: 8px;
+
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.9);
+
+  transition: 0.18s ease;
+}
+
+.savedItem:hover button {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
+
+.savedItem button:hover {
+  color: white;
+  background: rgba(239, 27, 27, 0.22);
+  border-color: rgba(239, 27, 27, 0.55);
+  box-shadow: 0 0 20px rgba(239, 27, 27, 0.22);
+}
+
+@media (max-width: 700px) {
+  .savedDropdown {
+    left: 14px !important;
+    right: 14px !important;
+    top: 78px !important;
+    width: auto !important;
+  }
+
+  .savedItem button {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}

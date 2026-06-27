@@ -1,0 +1,351 @@
+.section {
+  width: min(1320px, calc(100% - 70px));
+  margin: 0 auto 80px;
+  position: relative;
+  z-index: 3;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.heading b {
+  color: #ff8b2b;
+  font-size: 32px;
+  font-weight: 1000;
+}
+
+.heading span {
+  font-size: 15px;
+  font-weight: 1000;
+  letter-spacing: 1.8px;
+}
+
+.heading::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(255, 139, 43, 0.85), transparent);
+}
+
+.heroBox {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.heroText {
+  position: relative;
+  overflow: hidden;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 8% 22%, rgba(255, 139, 43, 0.22), transparent 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+.heroText::after {
+  content: "";
+  position: absolute;
+  right: -90px;
+  top: -90px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(255, 139, 43, 0.16);
+  filter: blur(20px);
+}
+
+.badge {
+  width: fit-content;
+  display: inline-flex;
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.42);
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.heroText h2 {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.05;
+  font-weight: 1000;
+  letter-spacing: -1.5px;
+}
+
+.heroText h2 span {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.74);
+}
+
+.heroText p {
+  position: relative;
+  z-index: 2;
+  max-width: 820px;
+  margin: 18px 0 0;
+  color: #c7c9d5;
+  font-size: 16px;
+  line-height: 1.65;
+  font-weight: 800;
+}
+
+.serverCard {
+  padding: 28px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 139, 43, 0.26), transparent 44%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.9);
+  border: 1px solid rgba(255, 139, 43, 0.28);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.serverCard > span {
+  color: #ffd84b;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.serverCard > b {
+  margin-top: 12px;
+  margin-bottom: 18px;
+  color: #fff;
+  font-size: 25px;
+  line-height: 1.1;
+  font-weight: 1000;
+}
+
+.serverLine {
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.serverLine small {
+  display: block;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.serverLine p {
+  margin: 6px 0 0;
+  color: #ffd84b;
+  font-size: 15px;
+  font-weight: 1000;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.stepCard {
+  position: relative;
+  min-height: 470px;
+  padding: 26px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(18, 21, 32, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  overflow: hidden;
+  transition: 0.22s;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepCard::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 22px;
+  bottom: 22px;
+  width: 4px;
+  background: #ff8b2b;
+  transform: scaleY(0);
+  transition: 0.22s;
+}
+
+.stepCard::after {
+  content: "";
+  position: absolute;
+  right: -90px;
+  bottom: -90px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 139, 43, 0.08);
+  filter: blur(18px);
+}
+
+.stepCard:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 139, 43, 0.5);
+  background:
+    linear-gradient(135deg, rgba(255, 139, 43, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(24, 28, 42, 0.96);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.stepCard:hover::before {
+  transform: scaleY(1);
+}
+
+.stepNumber {
+  position: absolute;
+  right: 18px;
+  top: 10px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 139, 43, 0.65);
+  font-size: 62px;
+  line-height: 1;
+  font-weight: 1000;
+  opacity: 0.55;
+}
+
+.icon {
+  position: relative;
+  z-index: 2;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 24px;
+  color: #ffd84b;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 139, 43, 0.86),
+    rgba(255, 94, 36, 0.3)
+  );
+  border: 1px solid rgba(255, 139, 43, 0.34);
+  font-size: 29px;
+  box-shadow: 0 0 28px rgba(255, 139, 43, 0.16);
+}
+
+.stepCard h3 {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 14px;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 1000;
+}
+
+.stepCard p {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  color: #c7c9d5;
+  font-size: 15px;
+  line-height: 1.58;
+  font-weight: 800;
+}
+
+.stepCard ul {
+  position: relative;
+  z-index: 2;
+  margin: 18px 0 24px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stepCard li {
+  color: #aeb3c2;
+  font-size: 14px;
+  line-height: 1.42;
+  font-weight: 800;
+}
+
+.stepCard li::marker {
+  color: #ff8b2b;
+}
+
+.connectBox {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 24px;
+}
+
+.connectBox div {
+  padding: 13px 14px;
+  background: rgba(255, 255, 255, 0.065);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.connectBox span {
+  display: block;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.connectBox b {
+  display: block;
+  color: #ffd84b;
+  font-size: 15px;
+  font-weight: 1000;
+  word-break: break-word;
+}
+
+.button {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  display: grid;
+  place-items: center;
+  color: #111;
+  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
+  font-size: 14px;
+  font-weight: 1000;
+  cursor: pointer;
+  box-shadow: 0 0 32px rgba(255, 139, 43, 0.28);
+  transition: 0.2s;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 48px rgba(255, 139, 43, 0.5);
+}
+
+@media (max-width: 1050px) {
+  .section {
+    width: calc(100% - 28px);
+  }
+
+  .heroBox {
+    grid-template-columns: 1fr;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .stepCard {
+    min-height: auto;
+  }
+}

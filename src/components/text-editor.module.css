@@ -1,0 +1,145 @@
+.editorBox {
+  overflow: hidden;
+  background: rgba(7, 9, 16, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toolbar button,
+.toolbar select {
+  min-height: 36px;
+  padding: 0 12px;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 1000;
+  outline: none;
+  transition: 0.18s;
+}
+
+.toolbar button:hover:not(:disabled),
+.toolbar select:hover:not(:disabled),
+.activeButton {
+  color: #111 !important;
+  background: linear-gradient(90deg, #ffe34a, #ff8b2b) !important;
+  border-color: rgba(255, 216, 75, 0.7) !important;
+}
+
+.toolbar button:disabled,
+.toolbar select:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.toolbar select option {
+  color: #111;
+}
+
+.editor {
+  background: rgba(7, 9, 16, 0.32);
+}
+
+.editor :global(.ProseMirror) {
+  min-height: 380px;
+  padding: 18px;
+  color: #d4d6e3;
+  outline: none;
+  font-size: 16px;
+  line-height: 1.72;
+  font-weight: 800;
+}
+
+.editor :global(.ProseMirror p) {
+  margin: 0 0 14px;
+}
+
+.editor :global(.ProseMirror h2) {
+  margin: 26px 0 14px;
+  color: #ffd84b;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 1000;
+}
+
+.editor :global(.ProseMirror h3) {
+  margin: 22px 0 12px;
+  color: #ffd84b;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 1000;
+}
+
+.editor :global(.ProseMirror ul),
+.editor :global(.ProseMirror ol) {
+  margin: 0 0 16px;
+  padding-left: 25px;
+  display: grid;
+  gap: 8px;
+}
+
+.editor :global(.ProseMirror li::marker) {
+  color: #ff8b2b;
+}
+
+.editor :global(.ProseMirror a) {
+  color: #ffd84b;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.editor :global(.ProseMirror strong) {
+  color: #ffffff;
+  font-weight: 1000;
+}
+
+.editor :global(.ProseMirror em) {
+  color: #fef3c7;
+}
+
+.editor :global(.ProseMirror:empty::before) {
+  content: "Начни писать текст статьи...";
+  color: #727686;
+  pointer-events: none;
+}
+
+.help {
+  padding: 12px 14px;
+  color: #b9bbc7;
+  background: rgba(255, 255, 255, 0.045);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.loading {
+  padding: 18px;
+  color: #b9bbc7;
+  background: rgba(7, 9, 16, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 14px;
+  font-weight: 900;
+}
+.editor :global(.ProseMirror ul) {
+  list-style-type: disc;
+}
+
+.editor :global(.ProseMirror ul li::marker) {
+  color: #ff8b2b;
+  font-size: 0.85em;
+}
+
+.editor :global(.ProseMirror ol li::marker) {
+  color: #ff8b2b;
+  font-weight: 1000;
+}

@@ -1,0 +1,259 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+
+  display: grid;
+  place-items: center;
+  padding: 24px;
+
+  background:
+    radial-gradient(circle at 50% 44%, rgba(239, 27, 27, 0.14), transparent 30%),
+    rgba(0, 0, 0, 0.82);
+
+  backdrop-filter: blur(14px);
+  animation: overlayShow 0.22s ease both;
+}
+
+.modal {
+  position: relative;
+  width: min(920px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+
+  padding: 34px;
+
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(239, 27, 27, 0.15), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    rgba(6, 6, 8, 0.98);
+
+  border: 1px solid rgba(239, 27, 27, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+    0 0 70px rgba(239, 27, 27, 0.16),
+    0 35px 120px rgba(0, 0, 0, 0.72);
+
+  animation: modalShow 0.24s ease both;
+}
+
+.modal::before {
+  content: "NOT LEGAL";
+  position: absolute;
+  right: 65px;
+  top: 18px;
+
+  color: rgba(255, 255, 255, 0.035);
+  font-size: 72px;
+  line-height: 1;
+  font-weight: 1000;
+  letter-spacing: -3px;
+
+  pointer-events: none;
+}
+
+.modal::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+
+  background: linear-gradient(90deg, transparent, #ef1b1b, transparent);
+  box-shadow: 0 0 22px rgba(239, 27, 27, 0.75);
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 1;
+  transition: 0.2s;
+}
+
+.closeButton:hover {
+  color: white;
+  background: rgba(239, 27, 27, 0.18);
+  border-color: rgba(239, 27, 27, 0.55);
+}
+
+.head {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+  margin-bottom: 28px;
+}
+
+.head span {
+  width: fit-content;
+  padding: 7px 10px;
+
+  display: inline-flex;
+  align-items: center;
+
+  color: #ef4444;
+  background: rgba(239, 27, 27, 0.1);
+  border: 1px solid rgba(239, 27, 27, 0.28);
+
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.head h2 {
+  margin: 16px 0 14px;
+
+  color: #ffffff;
+  font-size: clamp(44px, 6vw, 78px);
+  line-height: 0.9;
+  font-weight: 1000;
+  letter-spacing: -3px;
+}
+
+.head h2 b {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.75);
+}
+
+.head p {
+  margin: 0;
+
+  color: #a1a1aa;
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+.steps {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+  gap: 12px;
+}
+
+.step {
+  width: 100%;
+  min-height: 104px;
+  padding: 18px;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+
+  text-align: left;
+  color: white;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
+    rgba(8, 8, 10, 0.78);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: 0.22s;
+}
+
+.step:hover {
+  transform: translateY(-3px);
+  background: rgba(18, 18, 20, 0.94);
+  border-color: rgba(239, 27, 27, 0.55);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.32);
+}
+
+.number {
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  color: white;
+  background: #ef1b1b;
+
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.step h3 {
+  margin: 0 0 7px;
+
+  color: white;
+  font-size: 20px;
+  font-weight: 1000;
+}
+
+.step p {
+  max-width: 620px;
+  margin: 0;
+
+  color: #a1a1aa;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 550;
+}
+
+.step strong {
+  color: #ef4444;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalShow {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 650px) {
+  .overlay {
+    padding: 14px;
+  }
+
+  .modal {
+    padding: 24px;
+  }
+
+  .modal::before {
+    font-size: 46px;
+  }
+
+  .step {
+    grid-template-columns: 1fr;
+  }
+
+  .step strong {
+    display: none;
+  }
+}

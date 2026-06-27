@@ -1,0 +1,328 @@
+.page {
+  min-height: 100vh;
+  padding: 36px;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 14% 8%, rgba(255, 139, 43, 0.16), transparent 30%),
+    radial-gradient(circle at 88% 12%, rgba(139, 92, 246, 0.13), transparent 32%),
+    #070910;
+}
+
+.header {
+  width: min(1480px, 100%);
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.header span {
+  color: #ffd84b;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 2px;
+}
+
+.header h1 {
+  margin: 8px 0 8px;
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 1000;
+  letter-spacing: -2px;
+}
+
+.header p {
+  max-width: 680px;
+  margin: 0;
+  color: #aeb3c1;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.backButton {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  color: #ffd4a3;
+  background: rgba(255, 139, 43, 0.11);
+  border: 1px solid rgba(255, 139, 43, 0.28);
+  font-size: 13px;
+  font-weight: 900;
+  transition: 0.2s;
+}
+
+.backButton:hover {
+  color: #111;
+  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
+  transform: translateY(-2px);
+}
+
+.layout {
+  width: min(1480px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 330px minmax(430px, 1fr) 390px;
+  gap: 16px;
+  align-items: start;
+}
+
+.listCard,
+.formCard,
+.previewCard {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(16, 19, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.cardTitle b {
+  color: #ff8b2b;
+  font-size: 22px;
+  font-weight: 1000;
+}
+
+.cardTitle h2 {
+  margin: 0;
+  color: white;
+  font-size: 20px;
+  font-weight: 1000;
+}
+
+.newButton {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 14px;
+  color: #111;
+  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.usersList {
+  display: grid;
+  gap: 10px;
+}
+
+.emptyList {
+  padding: 16px;
+  color: #aeb3c1;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.userButton {
+  width: 100%;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.userButton:hover,
+.userButtonActive {
+  background: rgba(255, 139, 43, 0.12);
+  border-color: rgba(255, 139, 43, 0.38);
+}
+
+.userButton span {
+  width: fit-content;
+  padding: 4px 7px;
+  color: #ffd84b;
+  background: rgba(255, 139, 43, 0.12);
+  border: 1px solid rgba(255, 139, 43, 0.22);
+  font-size: 10px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.userButton b {
+  font-size: 15px;
+  font-weight: 1000;
+}
+
+.userButton small {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.formCard {
+  display: grid;
+  gap: 14px;
+}
+
+.formCard label {
+  display: grid;
+  gap: 8px;
+  color: #d4d6e3;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.formCard input {
+  height: 46px;
+  padding: 0 13px;
+  color: white;
+  background: rgba(7, 9, 16, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  outline: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.formCard input:focus {
+  border-color: rgba(255, 139, 43, 0.55);
+}
+
+.formCard input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.helpBox,
+.message {
+  padding: 13px;
+  color: #c7c9d5;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.helpBox b,
+.message {
+  color: #ffd84b;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  min-height: 44px;
+  padding: 0 16px;
+  color: #111;
+  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  color: #fecaca !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+.preview {
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+  background: rgba(7, 9, 16, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.avatar {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  color: #111;
+  background: linear-gradient(135deg, #ffe34a, #ff8b2b);
+  font-size: 28px;
+  font-weight: 1000;
+}
+
+.preview h3 {
+  margin: 0;
+  color: white;
+  font-size: 26px;
+  font-weight: 1000;
+}
+
+.preview p {
+  margin: -8px 0 0;
+  color: #aeb3c1;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.preview div:not(.avatar) {
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.preview span {
+  color: #ffd84b;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.preview b {
+  color: #d4d6e3;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+@media (max-width: 1150px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 22px 14px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header h1 {
+    font-size: 38px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}
