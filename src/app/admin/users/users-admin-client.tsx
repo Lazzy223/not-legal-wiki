@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ManagedUser } from "@/lib/users-store";
+import type { ManagedUser as StoredManagedUser } from "@/lib/users-store";
 import styles from "./users-admin.module.css";
+
+type ManagedUser = StoredManagedUser & {
+  role: string;
+};
 
 export default function UsersAdminClient() {
   const [users, setUsers] = useState<ManagedUser[]>([]);

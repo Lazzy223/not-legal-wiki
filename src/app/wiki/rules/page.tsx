@@ -395,7 +395,7 @@ export default function RulesPage() {
                       <details
                         id={anchor}
                         className={styles.ruleBlock}
-                        defaultOpen={blockIndex === 0}
+                        open={blockIndex === 0}
                         key={`${block.title}-${blockIndex}`}
                       >
                         <summary className={styles.ruleBlockSummary}>
