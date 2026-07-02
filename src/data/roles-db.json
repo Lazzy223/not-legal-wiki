@@ -1,0 +1,28 @@
+[
+  {
+    "id": "moderator",
+    "name": "Модератор",
+    "slug": "moderator",
+    "color": "#ef4444",
+    "permissions": {
+      "canOpenAdmin": true,
+      "canManageUsers": false
+    },
+    "isSystem": true,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "viewer",
+    "name": "Наблюдатель",
+    "slug": "viewer",
+    "color": "#71717a",
+    "permissions": {
+      "canOpenAdmin": false,
+      "canManageUsers": false
+    },
+    "isSystem": true,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+]

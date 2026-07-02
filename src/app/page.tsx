@@ -3,6 +3,7 @@ import SecretAuth from "@/components/secret-auth";
 import StartGuideModal from "@/components/start-guide-modal";
 import LegalStart from "@/components/legal-start";
 import styles from "./home.module.css";
+import HomeAdminButton from "@/components/home-admin-button";
 
 const mainLinks = [
   {
@@ -76,6 +77,7 @@ export default function HomePage() {
           <Link href="/wiki">Wiki</Link>
           <Link href="/wiki/changelog">Dev Blog</Link>
           <Link href="/wiki/rules">Правила</Link>
+          <HomeAdminButton>Админ-панель</HomeAdminButton>
         </nav>
       </header>
 
@@ -180,7 +182,7 @@ export default function HomePage() {
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
-            <Link href="/" className={styles.footerLogo} data-secret-auth-trigger>
+            <Link href="/" className={styles.footerLogo}>
               <span>NOT LEGAL</span>
               <b>RP</b>
             </Link>

@@ -1,15 +1,20 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { toAuthUser } from "@/lib/auth";
+import { toManagedAuthUser } from "@/lib/auth";
+import { findManagedRole } from "@/lib/roles-store";
 
 export type ManagedUser = {
   id: string;
   username: string;
   password: string;
-  role: "moderator";
+  roleId: string;
   createdAt: string;
   updatedAt: string;
+};
+
+type LegacyManagedUser = Partial<ManagedUser> & {
+  role?: string;
 };
 
 const filePath = path.join(process.cwd(), "src", "data", "users-db.json");
@@ -30,21 +35,23 @@ function normalizeUsername(value: string) {
   return value.trim().toLowerCase();
 }
 
-function normalizeUser(user: Partial<ManagedUser>): ManagedUser {
+function normalizeUser(user: LegacyManagedUser): ManagedUser {
   const now = new Date().toISOString();
 
   return {
     id: String(user.id || randomUUID()),
     username: String(user.username || "").trim(),
     password: String(user.password || "").trim(),
-    role: "moderator",
+    roleId: String(user.roleId || user.role || "moderator").trim(),
     createdAt: String(user.createdAt || now),
     updatedAt: String(user.updatedAt || now),
   };
 }
 
 function sortUsers(users: ManagedUser[]) {
-  return users.sort((a, b) => a.username.localeCompare(b.username));
+  return [...users].sort((a, b) =>
+    a.username.localeCompare(b.username, "ru")
+  );
 }
 
 async function saveUsers(users: ManagedUser[]) {
@@ -57,21 +64,35 @@ async function saveUsers(users: ManagedUser[]) {
   );
 }
 
+async function validateRole(roleId: string) {
+  const role = await findManagedRole(roleId);
+
+  if (!role) {
+    throw new Error("Выбранная роль не найдена");
+  }
+
+  return role;
+}
+
 export async function getManagedUsers() {
   await ensureFile();
 
   const file = await fs.readFile(filePath, "utf-8");
-  const rawUsers = JSON.parse(file) as Partial<ManagedUser>[];
+  const rawUsers = JSON.parse(file) as LegacyManagedUser[];
 
-  return sortUsers(rawUsers.map(normalizeUser));
+  return sortUsers(
+    (Array.isArray(rawUsers) ? rawUsers : []).map(normalizeUser)
+  );
 }
 
 export async function createManagedUser(data: {
   username: string;
   password: string;
+  roleId: string;
 }) {
   const username = data.username.trim();
   const password = data.password.trim();
+  const roleId = data.roleId.trim();
 
   if (!username) {
     throw new Error("Введите логин");
@@ -84,6 +105,8 @@ export async function createManagedUser(data: {
   if (normalizeUsername(username) === "owner") {
     throw new Error("Логин owner зарезервирован");
   }
+
+  await validateRole(roleId);
 
   const users = await getManagedUsers();
 
@@ -101,7 +124,7 @@ export async function createManagedUser(data: {
     id: randomUUID(),
     username,
     password,
-    role: "moderator",
+    roleId,
     createdAt: now,
     updatedAt: now,
   };
@@ -117,23 +140,22 @@ export async function updateManagedUser(
   id: string,
   data: {
     username: string;
-    password: string;
+    password?: string;
+    roleId: string;
   }
 ) {
   const username = data.username.trim();
-  const password = data.password.trim();
+  const roleId = data.roleId.trim();
 
   if (!username) {
     throw new Error("Введите логин");
   }
 
-  if (!password) {
-    throw new Error("Введите пароль");
-  }
-
   if (normalizeUsername(username) === "owner") {
     throw new Error("Логин owner зарезервирован");
   }
+
+  await validateRole(roleId);
 
   const users = await getManagedUsers();
   const index = users.findIndex((user) => user.id === id);
@@ -153,11 +175,13 @@ export async function updateManagedUser(
     throw new Error("Пользователь с таким логином уже существует");
   }
 
+  const password = String(data.password || "").trim();
+
   users[index] = {
     ...users[index],
     username,
-    password,
-    role: "moderator",
+    password: password || users[index].password,
+    roleId,
     updatedAt: new Date().toISOString(),
   };
 
@@ -199,5 +223,50 @@ export async function findManagedUserByCredentials(
     return null;
   }
 
-  return toAuthUser(user.username, "moderator");
+  const role =
+    (await findManagedRole(user.roleId)) ||
+    (await findManagedRole("viewer"));
+
+  if (!role) {
+    return null;
+  }
+
+  return toManagedAuthUser(user.username, role);
+}
+
+export async function changeManagedUserPassword(
+  username: string,
+  currentPassword: string,
+  newPassword: string
+) {
+  const cleanUsername = normalizeUsername(username);
+  const cleanCurrentPassword = currentPassword.trim();
+  const cleanNewPassword = newPassword.trim();
+
+  if (cleanNewPassword.length < 4) {
+    throw new Error("Новый пароль должен содержать минимум 4 символа");
+  }
+
+  const users = await getManagedUsers();
+  const index = users.findIndex(
+    (user) => normalizeUsername(user.username) === cleanUsername
+  );
+
+  if (index === -1) {
+    throw new Error("Пользователь не найден");
+  }
+
+  if (users[index].password !== cleanCurrentPassword) {
+    throw new Error("Текущий пароль указан неверно");
+  }
+
+  users[index] = {
+    ...users[index],
+    password: cleanNewPassword,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveUsers(users);
+
+  return true;
 }

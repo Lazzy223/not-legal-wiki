@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import {
   authCookieName,
   createSession,
-  toAuthUser,
+  validateOwnerUser,
 } from "@/lib/auth";
-import { validateOwnerCredentials } from "@/lib/owner-store";
 import { findManagedUserByCredentials } from "@/lib/users-store";
 
 export const runtime = "nodejs";
@@ -19,27 +18,35 @@ export async function POST(request: Request) {
 
     if (!username.trim() || !password.trim()) {
       return NextResponse.json(
-        { message: "Введите логин и пароль" },
-        { status: 400 }
+        {
+          message: "Введите логин и пароль",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    const isOwner = await validateOwnerCredentials(username, password);
-
-    const user = isOwner
-      ? toAuthUser("owner", "owner")
-      : await findManagedUserByCredentials(username, password);
+    const user =
+      validateOwnerUser(username, password) ||
+      (await findManagedUserByCredentials(username, password));
 
     if (!user) {
       return NextResponse.json(
-        { message: "Неверный логин или пароль" },
-        { status: 401 }
+        {
+          message: "Неверный логин или пароль",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
     const token = await createSession(user);
 
-    const response = NextResponse.json({ user });
+    const response = NextResponse.json({
+      user,
+    });
 
     response.cookies.set(authCookieName, token, {
       httpOnly: true,
@@ -54,8 +61,12 @@ export async function POST(request: Request) {
     console.error("LOGIN ERROR:", error);
 
     return NextResponse.json(
-      { message: "Ошибка сервера авторизации" },
-      { status: 500 }
+      {
+        message: "Ошибка сервера авторизации",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

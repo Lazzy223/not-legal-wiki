@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import styles from "./secret-auth.module.css";
 
@@ -13,6 +14,9 @@ type AuthUser = {
   canOpenAdmin?: boolean;
   canManageUsers?: boolean;
 };
+
+const SECRET_SEQUENCE = "2x9a0h-y";
+const ACTIVATION_WINDOW_MS = 15_000;
 
 function getUserName(user: AuthUser | null) {
   if (!user) return "Admin";
@@ -30,67 +34,156 @@ function getUserRole(user: AuthUser | null) {
   return user.roleName || user.role || "Пользователь";
 }
 
-export default function SecretAuth() {
-  const [clicks, setClicks] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+function normalizeText(value: string | null | undefined) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 
+export default function SecretAuth() {
+  const router = useRouter();
+
+  const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const armedUntilRef = useRef(0);
+  const sequencePositionRef = useRef(0);
+  const disarmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    function handleSecretClick(event: MouseEvent) {
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
+
+        const data = await response.json().catch(() => null);
+        setUser(data?.user || null);
+      } catch {
+        setUser(null);
+      }
+    }
+
+    loadCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    function disarm() {
+      armedUntilRef.current = 0;
+      sequencePositionRef.current = 0;
+
+      if (disarmTimerRef.current) {
+        clearTimeout(disarmTimerRef.current);
+        disarmTimerRef.current = null;
+      }
+    }
+
+    function arm() {
+      disarm();
+
+      armedUntilRef.current = Date.now() + ACTIVATION_WINDOW_MS;
+      sequencePositionRef.current = 0;
+      disarmTimerRef.current = setTimeout(disarm, ACTIVATION_WINDOW_MS);
+    }
+
+    function handleClick(event: MouseEvent) {
       const target = event.target as HTMLElement | null;
 
-      if (!target) return;
+      if (!target) {
+        return;
+      }
 
-      const trigger = target.closest("[data-secret-auth-trigger]");
+      const clickable = target.closest<HTMLElement>(
+        "button, a, [role='button']"
+      );
 
-      if (!trigger) return;
+      if (!clickable) {
+        return;
+      }
 
-      event.preventDefault();
+      const buttonText = normalizeText(clickable.textContent);
+      const isFullInstruction =
+        buttonText === "полная инструкция" ||
+        buttonText.startsWith("полная инструкция ");
 
-      setClicks((current) => {
-        const next = current + 1;
+      const isExplicitTrigger = Boolean(
+        target.closest("[data-secret-auth-trigger]")
+      );
 
-        if (resetTimer.current) {
-          clearTimeout(resetTimer.current);
-        }
+      if (!isFullInstruction && !isExplicitTrigger) {
+        return;
+      }
 
-        resetTimer.current = setTimeout(() => {
-          setClicks(0);
-        }, 1800);
+      // Обычный обработчик кнопки не блокируется:
+      // всплывающее окно инструкции откроется как раньше.
+      arm();
+    }
 
-        if (next >= 7) {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (Date.now() > armedUntilRef.current) {
+        disarm();
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+
+      if (
+        target?.matches("input, textarea, select") ||
+        target?.isContentEditable ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.metaKey ||
+        event.key.length !== 1
+      ) {
+        return;
+      }
+
+      const pressed = event.key.toLowerCase();
+      const expected =
+        SECRET_SEQUENCE[sequencePositionRef.current]?.toLowerCase();
+
+      if (pressed === expected) {
+        sequencePositionRef.current += 1;
+
+        if (sequencePositionRef.current === SECRET_SEQUENCE.length) {
+          disarm();
           setIsOpen(true);
-          setUser(null);
           setUsername("");
           setPassword("");
           setMessage("");
-          return 0;
         }
 
-        return next;
-      });
+        return;
+      }
+
+      sequencePositionRef.current =
+        pressed === SECRET_SEQUENCE[0].toLowerCase() ? 1 : 0;
     }
 
-    document.addEventListener("click", handleSecretClick);
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("click", handleSecretClick);
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
 
-      if (resetTimer.current) {
-        clearTimeout(resetTimer.current);
+      if (disarmTimerRef.current) {
+        clearTimeout(disarmTimerRef.current);
       }
     };
   }, []);
 
   async function login() {
+    if (!username.trim() || !password.trim()) {
+      setMessage("Введите логин и пароль");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
@@ -106,10 +199,23 @@ export default function SecretAuth() {
         }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+
+      let data: {
+        user?: AuthUser | null;
+        message?: string;
+      } = {};
+
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error(`Ошибка сервера авторизации: ${response.status}`);
+        }
+      }
 
       if (!response.ok) {
-        setMessage(data.message || "Неверный логин или пароль");
+        setMessage(data.message || `Ошибка авторизации: ${response.status}`);
         return;
       }
 
@@ -117,22 +223,32 @@ export default function SecretAuth() {
       setUsername("");
       setPassword("");
       setMessage("Вход выполнен");
-    } catch {
-      setMessage("Не удалось выполнить вход");
+
+      window.dispatchEvent(new Event("nlrp-auth-changed"));
+      router.refresh();
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Не удалось выполнить вход"
+      );
     } finally {
       setLoading(false);
     }
   }
 
   async function logout() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    });
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      setUser(null);
+      setUsername("");
+      setPassword("");
+      setMessage("Сессия сброшена");
 
-    setUser(null);
-    setUsername("");
-    setPassword("");
-    setMessage("Сессия сброшена");
+      window.dispatchEvent(new Event("nlrp-auth-changed"));
+      router.refresh();
+    }
   }
 
   if (!isOpen) {
@@ -152,6 +268,7 @@ export default function SecretAuth() {
           type="button"
           onClick={() => setIsOpen(false)}
           className={styles.closeButton}
+          aria-label="Закрыть окно авторизации"
         >
           ×
         </button>
@@ -159,7 +276,7 @@ export default function SecretAuth() {
         <div className={styles.modalTop}>
           <span>SECRET ACCESS</span>
           <h2>Авторизация</h2>
-          <p>Запретная зона!!</p>
+          <p>Закрытая панель управления проектом.</p>
         </div>
 
         {user ? (
@@ -177,7 +294,9 @@ export default function SecretAuth() {
                   Открыть админ-панель
                 </Link>
               ) : (
-                <div className={styles.message}>Нет доступа к админ-панели</div>
+                <div className={styles.message}>
+                  У этой роли нет доступа к админ-панели
+                </div>
               )}
 
               <button
@@ -196,8 +315,9 @@ export default function SecretAuth() {
               <input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                placeholder="Admin & Helper"
+                placeholder="Введите логин"
                 autoFocus
+                autoComplete="username"
               />
             </label>
 
@@ -208,8 +328,9 @@ export default function SecretAuth() {
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Введите пароль"
                 type="password"
+                autoComplete="current-password"
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                  if (event.key === "Enter" && !loading) {
                     login();
                   }
                 }}

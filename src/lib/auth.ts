@@ -1,9 +1,13 @@
-export type UserRole = "owner" | "moderator";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import type { ManagedRole } from "@/lib/roles-store";
+
+export type UserRole = "owner" | "manager" | "moderator" | "viewer";
 
 export type AuthUser = {
   username: string;
-  role: UserRole;
   login?: string;
+  role: UserRole;
+  roleId: string;
   roleName: string;
   canOpenAdmin: boolean;
   canManageUsers: boolean;
@@ -18,6 +22,10 @@ type Account = {
 type SessionPayload = {
   username: string;
   role: UserRole;
+  roleId: string;
+  roleName: string;
+  canOpenAdmin: boolean;
+  canManageUsers: boolean;
   exp: number;
 };
 
@@ -37,18 +45,25 @@ function getSecret() {
   return process.env.AUTH_SECRET || "dev-secret-change-me";
 }
 
-export function normalizeRole(role: string | null | undefined): UserRole | null {
+export function normalizeRole(
+  role: string | null | undefined
+): UserRole | null {
   if (!role) {
     return null;
   }
 
   const value = role.toLowerCase();
 
-  if (value === "owner") {
-    return "owner";
+  if (
+    value === "owner" ||
+    value === "manager" ||
+    value === "moderator" ||
+    value === "viewer"
+  ) {
+    return value;
   }
 
-  if (value === "moderator" || value === "moder") {
+  if (value === "moder") {
     return "moderator";
   }
 
@@ -58,40 +73,79 @@ export function normalizeRole(role: string | null | undefined): UserRole | null 
 export function getRoleName(role: string | null | undefined) {
   const normalizedRole = normalizeRole(role);
 
-  if (normalizedRole === "owner") {
-    return "Owner";
-  }
-
-  if (normalizedRole === "moderator") {
-    return "Модератор";
-  }
+  if (normalizedRole === "owner") return "Owner";
+  if (normalizedRole === "manager") return "Управляющий";
+  if (normalizedRole === "moderator") return "Модератор";
+  if (normalizedRole === "viewer") return "Наблюдатель";
 
   return "Пользователь";
 }
 
-export function canOpenAdmin(role: string | null | undefined) {
-  const normalizedRole = normalizeRole(role);
+export function canOpenAdmin(
+  roleOrUser: string | AuthUser | null | undefined
+) {
+  if (roleOrUser && typeof roleOrUser === "object") {
+    return Boolean(roleOrUser.canOpenAdmin);
+  }
 
-  return normalizedRole === "owner" || normalizedRole === "moderator";
+  const role = normalizeRole(roleOrUser);
+
+  return (
+    role === "owner" ||
+    role === "manager" ||
+    role === "moderator"
+  );
 }
 
-export function canManageUsers(role: string | null | undefined) {
-  const normalizedRole = normalizeRole(role);
+export function canManageUsers(
+  roleOrUser: string | AuthUser | null | undefined
+) {
+  if (roleOrUser && typeof roleOrUser === "object") {
+    return Boolean(roleOrUser.canManageUsers);
+  }
 
-  return normalizedRole === "owner";
+  const role = normalizeRole(roleOrUser);
+
+  return role === "owner" || role === "manager";
 }
 
 export function isOwner(role: string | null | undefined) {
   return normalizeRole(role) === "owner";
 }
 
-export function toAuthUser(username: string, role: UserRole): AuthUser {
+export function toAuthUser(
+  username: string,
+  role: UserRole
+): AuthUser {
   return {
     username,
+    login: username,
     role,
+    roleId: role,
     roleName: getRoleName(role),
     canOpenAdmin: canOpenAdmin(role),
     canManageUsers: canManageUsers(role),
+  };
+}
+
+export function toManagedAuthUser(
+  username: string,
+  role: ManagedRole
+): AuthUser {
+  const effectiveRole: UserRole = role.permissions.canManageUsers
+    ? "manager"
+    : role.permissions.canOpenAdmin
+      ? "moderator"
+      : "viewer";
+
+  return {
+    username,
+    login: username,
+    role: effectiveRole,
+    roleId: role.id,
+    roleName: role.name,
+    canOpenAdmin: role.permissions.canOpenAdmin,
+    canManageUsers: role.permissions.canManageUsers,
   };
 }
 
@@ -113,74 +167,48 @@ export function validateOwnerUser(username: string, password: string) {
   return toAuthUser(account.username, account.role);
 }
 
-function bytesToBase64Url(bytes: Uint8Array) {
-  let binary = "";
-
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-
-  return btoa(binary)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
+function encodeBase64Url(value: string) {
+  return Buffer.from(value, "utf-8").toString("base64url");
 }
 
-function stringToBase64Url(value: string) {
-  return bytesToBase64Url(new TextEncoder().encode(value));
+function decodeBase64Url(value: string) {
+  return Buffer.from(value, "base64url").toString("utf-8");
 }
 
-function base64UrlToString(value: string) {
-  const base64 = value.replaceAll("-", "+").replaceAll("_", "/");
-  const padded = base64.padEnd(
-    base64.length + ((4 - (base64.length % 4)) % 4),
-    "="
-  );
+function sign(value: string) {
+  return createHmac("sha256", getSecret())
+    .update(value)
+    .digest("base64url");
+}
 
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
+function signaturesEqual(left: string, right: string) {
+  try {
+    const leftBuffer = Buffer.from(left);
+    const rightBuffer = Buffer.from(right);
 
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
+    if (leftBuffer.length !== rightBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(leftBuffer, rightBuffer);
+  } catch {
+    return false;
   }
-
-  return new TextDecoder().decode(bytes);
-}
-
-async function getCryptoKey() {
-  return crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(getSecret()),
-    {
-      name: "HMAC",
-      hash: "SHA-256",
-    },
-    false,
-    ["sign"]
-  );
-}
-
-async function sign(value: string) {
-  const key = await getCryptoKey();
-
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(value)
-  );
-
-  return bytesToBase64Url(new Uint8Array(signature));
 }
 
 export async function createSession(user: AuthUser) {
   const payload: SessionPayload = {
     username: user.username,
     role: user.role,
+    roleId: user.roleId,
+    roleName: user.roleName,
+    canOpenAdmin: user.canOpenAdmin,
+    canManageUsers: user.canManageUsers,
     exp: Date.now() + sessionDurationMs,
   };
 
-  const body = stringToBase64Url(JSON.stringify(payload));
-  const signature = await sign(body);
+  const body = encodeBase64Url(JSON.stringify(payload));
+  const signature = sign(body);
 
   return `${body}.${signature}`;
 }
@@ -196,14 +224,16 @@ export async function verifySession(token?: string | null) {
     return null;
   }
 
-  const expectedSignature = await sign(body);
+  const expectedSignature = sign(body);
 
-  if (expectedSignature !== signature) {
+  if (!signaturesEqual(expectedSignature, signature)) {
     return null;
   }
 
   try {
-    const payload = JSON.parse(base64UrlToString(body)) as SessionPayload;
+    const payload = JSON.parse(
+      decodeBase64Url(body)
+    ) as Partial<SessionPayload>;
 
     if (!payload.exp || payload.exp < Date.now()) {
       return null;
@@ -215,7 +245,21 @@ export async function verifySession(token?: string | null) {
       return null;
     }
 
-    return toAuthUser(payload.username || "admin", role);
+    return {
+      username: payload.username || "admin",
+      login: payload.username || "admin",
+      role,
+      roleId: payload.roleId || role,
+      roleName: payload.roleName || getRoleName(role),
+      canOpenAdmin:
+        typeof payload.canOpenAdmin === "boolean"
+          ? payload.canOpenAdmin
+          : canOpenAdmin(role),
+      canManageUsers:
+        typeof payload.canManageUsers === "boolean"
+          ? payload.canManageUsers
+          : canManageUsers(role),
+    } satisfies AuthUser;
   } catch {
     return null;
   }

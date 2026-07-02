@@ -1,10 +1,18 @@
 [
   {
+    "id": "b4566c4a-1e14-4932-a3e1-b3876783c216",
+    "username": "alex",
+    "password": "prosto!02",
+    "roleId": "moderator",
+    "createdAt": "2026-07-02T17:37:34.637Z",
+    "updatedAt": "2026-07-02T17:37:34.637Z"
+  },
+  {
     "id": "0718c36a-b871-4f0c-bd2b-d2495468aeee",
     "username": "lazzy",
-    "password": "111",
-    "role": "moderator",
+    "password": "Lazzy223",
+    "roleId": "moderator",
     "createdAt": "2026-06-26T11:45:07.853Z",
-    "updatedAt": "2026-06-26T11:45:07.853Z"
+    "updatedAt": "2026-07-02T17:28:41.953Z"
   }
 ]

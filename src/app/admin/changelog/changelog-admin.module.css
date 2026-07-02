@@ -1,345 +1,870 @@
 .page {
   min-height: 100vh;
-  padding: 36px;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(255, 139, 43, 0.18), transparent 30%),
-    radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.18), transparent 30%),
-    #070910;
+  padding: 30px 34px 54px;
   color: #f8fafc;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(239, 27, 27, 0.11), transparent 27%),
+    radial-gradient(circle at 12% 34%, rgba(127, 29, 29, 0.08), transparent 24%),
+    linear-gradient(180deg, #07080b 0%, #030405 100%);
 }
 
 .header {
-  width: min(1480px, 100%);
-  margin: 0 auto 28px;
+  width: min(1540px, 100%);
+  min-height: 82px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
+  gap: 28px;
 }
 
-.header span {
-  color: #ffd84b;
-  font-size: 12px;
+.headerText {
+  display: grid;
+  gap: 5px;
+}
+
+.headerText > span,
+.panelHeading span,
+.editorHeader span,
+.editorPanelHead span,
+.previewModalHeader span {
+  color: #ef4444;
+  font-size: 10px;
   font-weight: 1000;
-  letter-spacing: 2px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
 }
 
 .header h1 {
-  margin: 10px 0 8px;
-  font-size: 58px;
+  margin: 0;
+  color: white;
+  font-size: 38px;
   line-height: 1;
   font-weight: 1000;
+  letter-spacing: -1.2px;
 }
 
 .header p {
-  margin: 0;
-  color: #b9bbc7;
-  font-size: 15px;
-  font-weight: 800;
+  margin: 2px 0 0;
+  color: #85858f;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
 }
 
 .headerActions {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
 }
 
-.backButton {
-  padding: 13px 18px;
-  color: #ffd4a3;
-  background: rgba(255, 139, 43, 0.12);
-  border: 1px solid rgba(255, 139, 43, 0.38);
-  font-size: 13px;
-  font-weight: 1000;
+.headerActions > a,
+.headerActions > button {
+  min-height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 950;
   transition: 0.2s;
 }
 
-.backButton:hover {
+.previewButton {
+  color: white;
+  background: rgba(239, 27, 27, 0.14);
+  border: 1px solid rgba(239, 27, 27, 0.46);
+  box-shadow: 0 0 28px rgba(239, 27, 27, 0.12);
+}
+
+.openBlogButton {
+  color: #fecaca;
+  background: rgba(239, 27, 27, 0.07);
+  border: 1px solid rgba(239, 27, 27, 0.25);
+}
+
+.backButton {
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.headerActions > a:hover,
+.headerActions > button:hover {
+  color: white;
+  border-color: rgba(239, 27, 27, 0.58);
+  background: rgba(239, 27, 27, 0.16);
   transform: translateY(-2px);
-  background: rgba(255, 139, 43, 0.22);
+}
+
+.stats {
+  width: min(1540px, 100%);
+  margin: 0 auto 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stats article {
+  min-height: 98px;
+  padding: 15px 17px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
+    rgba(8, 9, 12, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 12px;
+}
+
+.stats span {
+  color: #85858f;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.stats strong {
+  color: white;
+  font-size: 27px;
+  line-height: 1;
+  font-weight: 1000;
+}
+
+.stats small {
+  color: #52525b;
+  font-size: 9px;
+  font-weight: 750;
 }
 
 .layout {
-  width: min(1480px, 100%);
+  width: min(1540px, 100%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 330px minmax(480px, 1.05fr) minmax(430px, 1fr);
-  gap: 16px;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
 }
 
 .postsList,
-.formCard,
-.previewCard {
-  padding: 24px;
+.editorCard {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(18, 21, 32, 0.92);
-  border: 1px solid rgba(255, 139, 43, 0.22);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.01)),
+    rgba(8, 9, 12, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.24);
 }
 
 .postsList {
   position: sticky;
-  top: 20px;
-  max-height: calc(100vh - 40px);
-  overflow: auto;
-}
-
-.cardTitle {
+  top: 18px;
+  max-height: calc(100vh - 36px);
+  padding: 17px;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  flex-direction: column;
 }
 
-.cardTitle b {
-  color: #ff8b2b;
-  font-size: 28px;
+.panelHeading {
+  margin-bottom: 13px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.panelHeading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.panelHeading h2,
+.editorHeader h2,
+.editorPanelHead h3,
+.previewModalHeader h2 {
+  margin: 0;
+  color: white;
   font-weight: 1000;
 }
 
-.cardTitle h2 {
-  margin: 0;
-  font-size: 19px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+.panelHeading h2 {
+  font-size: 18px;
+}
+
+.panelHeading > b {
+  min-width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: rgba(239, 27, 27, 0.13);
+  border: 1px solid rgba(239, 27, 27, 0.31);
+  border-radius: 999px;
+  font-size: 11px;
 }
 
 .newButton {
   width: 100%;
-  min-height: 48px;
-  margin-bottom: 14px;
-  border: none;
-  color: #111;
-  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
+  min-height: 43px;
+  margin-bottom: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: white;
+  background: linear-gradient(135deg, #dc2626, #7f1d1d);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 1000;
-  box-shadow: 0 0 34px rgba(255, 139, 43, 0.24);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 950;
+  box-shadow: 0 0 26px rgba(220, 38, 38, 0.16);
   transition: 0.2s;
 }
 
 .newButton:hover {
   transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.newButton span {
+  font-size: 16px;
 }
 
 .postButtons {
+  min-height: 0;
   display: grid;
-  gap: 8px;
+  gap: 7px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.postButtons::-webkit-scrollbar {
+  width: 5px;
+}
+
+.postButtons::-webkit-scrollbar-thumb {
+  background: rgba(239, 27, 27, 0.28);
+  border-radius: 999px;
 }
 
 .emptyList {
-  padding: 14px;
-  color: #b9bbc7;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  font-size: 13px;
-  font-weight: 900;
+  padding: 16px 13px;
+  color: #71717a;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.075);
+  border-radius: 9px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 750;
 }
 
 .postButton {
   width: 100%;
-  min-height: 90px;
-  padding: 14px;
+  min-height: 83px;
+  padding: 11px 12px;
   display: grid;
-  gap: 5px;
-  text-align: left;
-  cursor: pointer;
+  align-content: center;
+  gap: 7px;
   color: white;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: 0.18s;
+}
+
+.postButton:hover {
+  background: rgba(239, 27, 27, 0.05);
+  border-color: rgba(239, 27, 27, 0.21);
+  transform: translateX(2px);
+}
+
+.postButtonActive {
+  background:
+    linear-gradient(90deg, rgba(239, 27, 27, 0.16), rgba(239, 27, 27, 0.035));
+  border-color: rgba(239, 27, 27, 0.42);
+  box-shadow: 0 0 25px rgba(239, 27, 27, 0.08);
+}
+
+.postButtonTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.postButtonTop span {
+  color: #71717a;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.postButtonTop b {
+  color: #ef4444;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 0.7px;
+}
+
+.postButton > strong {
+  overflow: hidden;
+  color: #e4e4e7;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.postMeta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.postMeta small {
+  min-height: 21px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 6px;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.editorCard {
+  min-width: 0;
+  padding: 21px;
+}
+
+.editorHeader {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.editorHeader > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.editorHeader h2 {
+  max-width: 720px;
+  overflow: hidden;
+  font-size: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draftStatus {
+  min-height: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.draftStatus i {
+  width: 7px;
+  height: 7px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.75);
+}
+
+.generalFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
+  gap: 11px;
+}
+
+.generalFields label,
+.descriptionField {
+  display: grid;
+  gap: 8px;
+  color: #a1a1aa;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.generalFields label > span,
+.descriptionField > span {
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.generalFields input,
+.descriptionField textarea {
+  width: 100%;
+  color: white;
+  background: rgba(255, 255, 255, 0.026);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 9px;
+  outline: none;
+  font-family: inherit;
   transition: 0.2s;
 }
 
-.postButton:hover,
-.postButtonActive {
-  border-color: rgba(255, 139, 43, 0.55);
-  background: rgba(255, 139, 43, 0.12);
-  transform: translateX(3px);
+.generalFields input {
+  min-height: 47px;
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.postButton span {
-  color: #ffd84b;
-  font-size: 11px;
-  font-weight: 1000;
+.descriptionField {
+  margin-top: 13px;
 }
 
-.postButton b {
-  color: white;
+.descriptionField textarea {
+  min-height: 102px;
+  padding: 13px;
+  resize: vertical;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.generalFields input:focus,
+.descriptionField textarea:focus {
+  border-color: rgba(239, 27, 27, 0.46);
+  background: rgba(239, 27, 27, 0.035);
+  box-shadow: 0 0 0 3px rgba(239, 27, 27, 0.07);
+}
+
+.descriptionField small {
+  color: #52525b;
+  font-size: 9px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.editorTabs {
+  margin: 18px 0 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.editorTabs button {
+  min-height: 56px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: #85858f;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.18s;
+}
+
+.editorTabs button > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.editorTabs button span {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  color: #ef4444;
+  background: rgba(239, 27, 27, 0.07);
+  border: 1px solid rgba(239, 27, 27, 0.2);
+  border-radius: 8px;
   font-size: 15px;
   font-weight: 1000;
 }
 
-.postButton small {
-  color: #b9bbc7;
-  font-size: 12px;
-  font-weight: 800;
+.editorTabs button strong {
+  font-size: 11px;
+  font-weight: 950;
 }
 
-.formGrid {
+.editorTabs button > b {
+  min-width: 27px;
+  height: 27px;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 12px;
-}
-
-.formCard label {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 16px;
-  color: #f8fafc;
-  font-size: 13px;
-  font-weight: 1000;
-}
-
-.formCard input {
-  width: 100%;
-  height: 50px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  outline: none;
-  color: white;
-  background: rgba(255, 255, 255, 0.075);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.formCard input:focus {
-  border-color: rgba(255, 139, 43, 0.7);
-  box-shadow: 0 0 28px rgba(255, 139, 43, 0.14);
-}
-
-.formCard input::placeholder {
-  color: #8c90a0;
-}
-
-.editorTabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin: 4px 0 12px;
-}
-
-.editorTabs button {
-  min-height: 50px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  color: #c7c9d5;
-  background: rgba(255, 255, 255, 0.055);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 1000;
-  transition: 0.2s;
+  place-items: center;
+  color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+  font-size: 9px;
 }
 
 .editorTabs button:hover,
 .editorTabActive {
-  color: #111 !important;
-  background: linear-gradient(90deg, #ffe34a, #ff8b2b) !important;
-  border-color: rgba(255, 216, 75, 0.7) !important;
+  color: white !important;
+  background: rgba(239, 27, 27, 0.08) !important;
+  border-color: rgba(239, 27, 27, 0.34) !important;
 }
 
-.editorTabs span {
-  min-width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  color: white;
-  background: rgba(7, 9, 16, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  font-size: 12px;
-  font-weight: 1000;
+.editorTabActive {
+  box-shadow: 0 0 26px rgba(239, 27, 27, 0.08);
 }
 
 .editorPanel {
-  margin-bottom: 14px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
 }
 
-.editorHint {
-  margin-bottom: 10px;
-  padding: 12px 14px;
-  color: #b9bbc7;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  font-size: 13px;
-  line-height: 1.45;
-  font-weight: 800;
+.editorPanelHead {
+  margin-bottom: 11px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.message {
-  margin-bottom: 14px;
-  padding: 12px 14px;
-  color: #d9f99d;
-  background: rgba(132, 204, 22, 0.11);
-  border: 1px solid rgba(132, 204, 22, 0.26);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.formActions {
+.editorPanelHead > div {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
+  gap: 3px;
 }
 
-.formActions button {
-  min-height: 52px;
-  border: none;
-  color: #111;
-  background: linear-gradient(90deg, #ffe34a, #ff8b2b);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 1000;
-  transition: 0.2s;
-  box-shadow: 0 0 34px rgba(255, 139, 43, 0.24);
-}
-
-.formActions button:hover {
-  transform: translateY(-2px);
-}
-
-.formActions button:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.deleteButton {
-  padding: 0 18px;
-  color: white !important;
-  background: rgba(239, 68, 68, 0.85) !important;
-  box-shadow: 0 0 28px rgba(239, 68, 68, 0.24) !important;
-}
-
-.previewCard {
-  overflow: hidden;
-}
-
-.previewCard :global(.content) {
+.editorPanelHead h3 {
   font-size: 15px;
 }
 
-@media (max-width: 1260px) {
-  .layout {
-    grid-template-columns: 320px 1fr;
+.editorPanelHead > button {
+  min-height: 33px;
+  padding: 0 10px;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  transition: 0.18s;
+}
+
+.editorPanelHead > button:hover {
+  color: white;
+  border-color: rgba(239, 27, 27, 0.32);
+}
+
+.editorHint {
+  margin-bottom: 11px;
+  padding: 10px 11px;
+  color: #85858f;
+  background: rgba(239, 27, 27, 0.035);
+  border-left: 2px solid rgba(239, 27, 27, 0.65);
+  font-size: 10px;
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+.message {
+  margin-top: 13px;
+  padding: 11px 13px;
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.07);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.messageError {
+  color: #fecaca;
+  background: rgba(239, 27, 27, 0.07);
+  border-color: rgba(239, 27, 27, 0.25);
+}
+
+.formActions {
+  margin-top: 15px;
+  padding-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.formActionsInfo {
+  display: grid;
+  gap: 4px;
+}
+
+.formActionsInfo span {
+  color: #85858f;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.formActionsInfo small {
+  color: #52525b;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.formActionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.formActionButtons button {
+  min-height: 43px;
+  padding: 0 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 950;
+  transition: 0.18s;
+}
+
+.saveButton {
+  color: white;
+  background: linear-gradient(135deg, #dc2626, #7f1d1d);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.14);
+}
+
+.saveButton:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.saveButton:disabled,
+.deleteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.deleteButton {
+  color: #fca5a5;
+  background: rgba(239, 27, 27, 0.06);
+  border: 1px solid rgba(239, 27, 27, 0.21);
+}
+
+.deleteButton:hover {
+  color: white;
+  background: rgba(239, 27, 27, 0.14);
+}
+
+.mobilePreviewButton {
+  display: none;
+  color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.previewPortal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+}
+
+.previewOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.82);
+  border: 0;
+  cursor: default;
+  backdrop-filter: blur(10px);
+}
+
+.previewModal {
+  position: relative;
+  z-index: 2;
+  width: min(1480px, 100%);
+  max-height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  color: white;
+  background:
+    radial-gradient(circle at 80% 0%, rgba(239, 27, 27, 0.1), transparent 27%),
+    rgba(5, 6, 8, 0.99);
+  border: 1px solid rgba(239, 27, 27, 0.32);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+    0 38px 120px rgba(0, 0, 0, 0.72);
+  overflow: hidden;
+  animation: previewEnter 0.2s ease-out;
+}
+
+@keyframes previewEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
   }
 
-  .previewCard {
-    grid-column: 1 / -1;
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-@media (max-width: 880px) {
+.previewModalHeader {
+  min-height: 88px;
+  padding: 17px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.018);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.previewModalHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.previewModalHeader h2 {
+  overflow: hidden;
+  font-size: 19px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewModalHeader p {
+  margin: 0;
+  color: #71717a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.previewModalHeader > button {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  transition: 0.18s;
+}
+
+.previewModalHeader > button:hover {
+  color: white;
+  background: rgba(239, 27, 27, 0.13);
+  border-color: rgba(239, 27, 27, 0.36);
+}
+
+.previewStage {
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(239, 27, 27, 0.065), transparent 30%),
+    #030405;
+}
+
+.previewStage::-webkit-scrollbar {
+  width: 7px;
+}
+
+.previewStage::-webkit-scrollbar-thumb {
+  background: rgba(239, 27, 27, 0.3);
+  border-radius: 999px;
+}
+
+.previewModalFooter {
+  min-height: 62px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: rgba(255, 255, 255, 0.018);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.previewModalFooter span {
+  color: #71717a;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.previewModalFooter button {
+  min-height: 39px;
+  padding: 0 13px;
+  color: white;
+  background: rgba(239, 27, 27, 0.12);
+  border: 1px solid rgba(239, 27, 27, 0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+@media (max-width: 1120px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+
+  .generalFields {
     grid-template-columns: 1fr;
   }
 
-  .postsList {
-    position: static;
-    max-height: none;
+  .formActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .formActionButtons {
+    width: 100%;
+  }
+}
+
+@media (max-width: 780px) {
+  .page {
+    padding: 22px 14px 42px;
   }
 
   .header {
@@ -348,67 +873,91 @@
   }
 
   .headerActions {
+    width: 100%;
     justify-content: flex-start;
   }
-}
 
-@media (max-width: 620px) {
-  .page {
-    padding: 18px;
+  .stats {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .header h1 {
-    font-size: 42px;
-  }
-
-  .postsList,
-  .formCard,
-  .previewCard {
-    padding: 20px;
-  }
-
-  .formGrid,
-  .formActions {
+  .layout {
     grid-template-columns: 1fr;
   }
+
+  .postsList {
+    position: static;
+    max-height: 470px;
+  }
+
+  .editorHeader,
+  .editorPanelHead,
+  .previewModalHeader,
+  .previewModalFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .draftStatus {
+    align-self: flex-start;
+  }
+
+  .formActionButtons {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .mobilePreviewButton {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .previewPortal {
+    padding: 10px;
+  }
+
+  .previewModal {
+    max-height: calc(100vh - 20px);
+  }
+
+  .previewModalFooter button {
+    width: 100%;
+  }
 }
-.descriptionField {
-  margin-top: 16px;
 
-  display: grid;
-  gap: 9px;
+@media (max-width: 520px) {
+  .header h1 {
+    font-size: 32px;
+  }
 
-  color: #d4d4d8;
-  font-size: 13px;
-  font-weight: 900;
-}
+  .headerActions > a,
+  .headerActions > button {
+    width: 100%;
+  }
 
-.descriptionField textarea {
-  width: 100%;
-  min-height: 110px;
-  padding: 14px 15px;
+  .stats {
+    grid-template-columns: 1fr;
+  }
 
-  resize: vertical;
+  .editorCard,
+  .postsList {
+    padding: 14px;
+  }
 
-  color: white;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  outline: none;
+  .editorTabs {
+    grid-template-columns: 1fr;
+  }
 
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 650;
-  font-family: inherit;
+  .formActionButtons {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 
-  transition: 0.2s;
-}
+  .formActionButtons button {
+    width: 100%;
+  }
 
-.descriptionField textarea:focus {
-  border-color: rgba(239, 27, 27, 0.5);
-  background: rgba(239, 27, 27, 0.045);
-  box-shadow: 0 0 0 3px rgba(239, 27, 27, 0.1);
-}
-
-.descriptionField textarea::placeholder {
-  color: #71717a;
+  .previewStage {
+    padding: 10px;
+  }
 }

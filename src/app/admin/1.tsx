@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminProfileMenu from "@/components/admin-profile-menu";
 import styles from "./admin.module.css";
 
 type AuthUser = {
@@ -133,6 +132,8 @@ export default function AdminPage() {
   const adminName =
     user?.username?.trim() || user?.login?.trim() || "Администратор";
 
+  const adminInitial = adminName.slice(0, 1).toUpperCase();
+
   const formattedTime = now.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
@@ -213,7 +214,14 @@ export default function AdminPage() {
           </Link>
         </nav>
 
-        <AdminProfileMenu user={user} />
+        <div className={styles.sidebarFooter}>
+          <div className={styles.userAvatar}>{adminInitial}</div>
+
+          <div>
+            <strong>{adminName}</strong>
+            <span>{user?.roleName || user?.role || "Администратор"}</span>
+          </div>
+        </div>
       </aside>
 
       <section className={styles.workspace}>

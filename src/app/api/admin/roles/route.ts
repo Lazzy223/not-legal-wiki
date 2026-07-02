@@ -2,17 +2,17 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { authCookieName, verifySession } from "@/lib/auth";
 import {
-  createManagedUser,
-  deleteManagedUser,
-  getManagedUsers,
-  updateManagedUser,
-} from "@/lib/users-store";
-import { getManagedRoles } from "@/lib/roles-store";
+  createManagedRole,
+  deleteManagedRole,
+  getManagedRoles,
+  updateManagedRole,
+} from "@/lib/roles-store";
+import { getManagedUsers } from "@/lib/users-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function requireUserManager() {
+async function requireRoleManager() {
   const cookieStore = await cookies();
   const token = cookieStore.get(authCookieName)?.value;
   const user = await verifySession(token);
@@ -25,7 +25,7 @@ async function requireUserManager() {
 }
 
 export async function GET() {
-  const currentUser = await requireUserManager();
+  const currentUser = await requireRoleManager();
 
   if (!currentUser) {
     return NextResponse.json(
@@ -34,45 +34,34 @@ export async function GET() {
     );
   }
 
-  const [users, roles] = await Promise.all([
-    getManagedUsers(),
-    getManagedRoles(),
-  ]);
-
-  const roleMap = new Map(roles.map((role) => [role.id, role]));
+  const roles = await getManagedRoles();
 
   return NextResponse.json({
-    users: [
+    roles: [
       {
         id: "owner",
-        username: "owner",
-        roleId: "owner",
-        roleName: "Owner",
-        roleColor: "#ef4444",
+        name: "Owner",
+        slug: "owner",
+        color: "#ef4444",
+        permissions: {
+          canOpenAdmin: true,
+          canManageUsers: true,
+        },
         isSystem: true,
+        assignable: false,
         createdAt: "",
         updatedAt: "",
       },
-      ...users.map((user) => {
-        const role = roleMap.get(user.roleId);
-
-        return {
-          id: user.id,
-          username: user.username,
-          roleId: user.roleId,
-          roleName: role?.name || "Роль не найдена",
-          roleColor: role?.color || "#71717a",
-          isSystem: false,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        };
-      }),
+      ...roles.map((role) => ({
+        ...role,
+        assignable: true,
+      })),
     ],
   });
 }
 
 export async function POST(request: NextRequest) {
-  const currentUser = await requireUserManager();
+  const currentUser = await requireRoleManager();
 
   if (!currentUser) {
     return NextResponse.json(
@@ -84,20 +73,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const user = await createManagedUser({
-      username: String(body?.username || ""),
-      password: String(body?.password || ""),
-      roleId: String(body?.roleId || "viewer"),
+    const role = await createManagedRole({
+      name: String(body?.name || ""),
+      slug: String(body?.slug || ""),
+      color: String(body?.color || ""),
+      permissions: body?.permissions,
     });
 
-    return NextResponse.json({ user });
+    return NextResponse.json({ role });
   } catch (error) {
     return NextResponse.json(
       {
         message:
           error instanceof Error
             ? error.message
-            : "Ошибка создания пользователя",
+            : "Ошибка создания роли",
       },
       { status: 400 }
     );
@@ -105,7 +95,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const currentUser = await requireUserManager();
+  const currentUser = await requireRoleManager();
 
   if (!currentUser) {
     return NextResponse.json(
@@ -117,20 +107,21 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const user = await updateManagedUser(String(body?.id || ""), {
-      username: String(body?.username || ""),
-      password: String(body?.password || ""),
-      roleId: String(body?.roleId || "viewer"),
+    const role = await updateManagedRole(String(body?.id || ""), {
+      name: String(body?.name || ""),
+      slug: String(body?.slug || ""),
+      color: String(body?.color || ""),
+      permissions: body?.permissions,
     });
 
-    return NextResponse.json({ user });
+    return NextResponse.json({ role });
   } catch (error) {
     return NextResponse.json(
       {
         message:
           error instanceof Error
             ? error.message
-            : "Ошибка обновления пользователя",
+            : "Ошибка обновления роли",
       },
       { status: 400 }
     );
@@ -138,7 +129,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const currentUser = await requireUserManager();
+  const currentUser = await requireRoleManager();
 
   if (!currentUser) {
     return NextResponse.json(
@@ -150,12 +141,15 @@ export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
     const id = String(body?.id || "");
+    const users = await getManagedUsers();
 
-    if (!id || id === "owner") {
-      throw new Error("Владельца удалить нельзя");
+    if (users.some((user) => user.roleId === id)) {
+      throw new Error(
+        "Сначала назначь пользователям другую роль"
+      );
     }
 
-    await deleteManagedUser(id);
+    await deleteManagedRole(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -164,7 +158,7 @@ export async function DELETE(request: NextRequest) {
         message:
           error instanceof Error
             ? error.message
-            : "Ошибка удаления пользователя",
+            : "Ошибка удаления роли",
       },
       { status: 400 }
     );

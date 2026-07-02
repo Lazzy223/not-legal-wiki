@@ -1,0 +1,285 @@
+.root {
+  position: relative;
+  margin-top: auto;
+}
+
+.profileButton {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.18s;
+}
+
+.profileButton:hover,
+.profileButton[aria-expanded="true"] {
+  background: rgba(239, 27, 27, 0.06);
+  border-color: rgba(239, 27, 27, 0.3);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: linear-gradient(135deg, #ef1b1b, #611414);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 1000;
+  box-shadow: 0 8px 24px rgba(239, 27, 27, 0.18);
+}
+
+.profileText {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.profileText strong {
+  overflow: hidden;
+  color: white;
+  font-size: 12px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileText span {
+  overflow: hidden;
+  color: #71717a;
+  font-size: 10px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: #71717a;
+  font-size: 17px;
+}
+
+.popup {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 150;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(239, 27, 27, 0.11), transparent 35%),
+    rgba(8, 9, 12, 0.985);
+  border: 1px solid rgba(239, 27, 27, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(18px);
+  animation: popupIn 0.16s ease-out;
+}
+
+@keyframes popupIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popupHeader {
+  min-height: 42px;
+  margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.popupHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.popupHeader span {
+  color: #ef4444;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+}
+
+.popupHeader strong {
+  overflow: hidden;
+  color: white;
+  font-size: 12px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backButton,
+.closeButton {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.closeButton {
+  justify-self: end;
+}
+
+.backButton:hover,
+.closeButton:hover {
+  color: white;
+  border-color: rgba(239, 27, 27, 0.3);
+}
+
+.menuList {
+  display: grid;
+  gap: 6px;
+}
+
+.menuList > button {
+  min-height: 54px;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  color: white;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: 0.16s;
+}
+
+.menuList > button:hover {
+  background: rgba(239, 27, 27, 0.06);
+  border-color: rgba(239, 27, 27, 0.22);
+}
+
+.menuList > button > span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #ef4444;
+  background: rgba(239, 27, 27, 0.08);
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.menuList > button > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.menuList strong {
+  color: #e4e4e7;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.menuList small {
+  color: #71717a;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.logoutAction {
+  color: #fca5a5 !important;
+}
+
+.logoutAction > span {
+  color: #f87171 !important;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+  color: #a1a1aa;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.form input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  color: white;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  outline: none;
+  font: inherit;
+}
+
+.form input:focus {
+  border-color: rgba(239, 27, 27, 0.48);
+  box-shadow: 0 0 0 3px rgba(239, 27, 27, 0.08);
+}
+
+.submitButton {
+  min-height: 40px;
+  color: white;
+  background: rgba(239, 27, 27, 0.16);
+  border: 1px solid rgba(239, 27, 27, 0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.submitButton:disabled,
+.menuList button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.message {
+  margin-top: 9px;
+  padding: 9px 10px;
+  color: #fecaca;
+  background: rgba(239, 27, 27, 0.07);
+  border: 1px solid rgba(239, 27, 27, 0.18);
+  border-radius: 8px;
+  font-size: 9px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .popup {
+    position: fixed;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+}
