@@ -199,7 +199,32 @@
 }
 
 .previewPanel {
-  padding: 16px;
+  padding: 16px 10px 16px 16px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #c81e2b rgba(255, 255, 255, 0.035);
+}
+
+.previewPanel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.previewPanel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 999px;
+}
+
+.previewPanel::-webkit-scrollbar-thumb {
+  min-height: 72px;
+  background: linear-gradient(180deg, #f04444 0%, #a80f1d 100%);
+  border: 2px solid #0a0b0f;
+  border-radius: 999px;
+  box-shadow: 0 0 16px rgba(239, 27, 27, 0.26);
+}
+
+.previewPanel::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff6666 0%, #d51726 100%);
 }
 
 .editorPanel {
@@ -618,6 +643,62 @@
   cursor: not-allowed;
 }
 
+.previewScrollLegend {
+  margin: -3px 0 12px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 9px;
+}
+
+.previewScrollLegend span {
+  min-height: 25px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.previewScrollLegend i {
+  width: 5px;
+  height: 15px;
+  display: block;
+  border-radius: 999px;
+}
+
+.previewScrollLegendPanel {
+  color: #fca5a5;
+  background: rgba(239, 27, 27, 0.07);
+  border: 1px solid rgba(239, 27, 27, 0.17);
+}
+
+.previewScrollLegendPanel i {
+  background: linear-gradient(180deg, #fb7185, #b91c1c);
+  box-shadow: 0 0 9px rgba(239, 27, 27, 0.35);
+}
+
+.previewScrollLegendRules {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.07);
+  border: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+.previewScrollLegendRules i {
+  background: linear-gradient(180deg, #fde047, #d97706);
+  box-shadow: 0 0 9px rgba(245, 158, 11, 0.35);
+}
+
 .saveButton {
   min-width: 190px;
   color: white;
@@ -735,14 +816,103 @@
   text-overflow: ellipsis;
 }
 
+.previewContentFrame {
+  margin-top: 10px;
+  padding: 10px 7px 7px 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(245, 158, 11, 0.04), transparent 42%),
+    rgba(3, 4, 6, 0.48);
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  border-radius: 11px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.018);
+}
+
+.previewContentHeader {
+  min-height: 31px;
+  padding: 0 3px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.12);
+}
+
+.previewContentHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.previewContentHeader span {
+  color: #fbbf24;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 0.85px;
+}
+
+.previewContentHeader small {
+  color: #71717a;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.previewContentHeader > b {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 7px;
+  font-size: 13px;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.08);
+}
+
 .previewContent {
   max-height: 420px;
-  margin-top: 10px;
-  padding: 13px;
-  overflow: auto;
-  background: rgba(3, 4, 6, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 10px;
+  margin-top: 7px;
+  padding: 13px 8px 13px 13px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #f4b41b rgba(245, 158, 11, 0.055);
+  background: rgba(3, 4, 6, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 8px;
+  outline: none;
+}
+
+.previewContent:focus-visible {
+  border-color: rgba(245, 158, 11, 0.36);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.08);
+}
+
+.previewContent::-webkit-scrollbar {
+  width: 14px;
+}
+
+.previewContent::-webkit-scrollbar-track {
+  background: rgba(245, 158, 11, 0.045);
+  border-left: 1px solid rgba(245, 158, 11, 0.1);
+  border-radius: 999px;
+}
+
+.previewContent::-webkit-scrollbar-thumb {
+  min-height: 62px;
+  background: linear-gradient(180deg, #fde047 0%, #f59e0b 55%, #c56b08 100%);
+  border: 3px solid #07080b;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.28);
+}
+
+.previewContent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #fff08a 0%, #fbbf24 55%, #e4870b 100%);
 }
 
 .previewContent :global(h1),
@@ -791,13 +961,18 @@
   }
 
   .previewPanel > .panelHeading,
+  .previewPanel > .previewScrollLegend,
   .previewPanel > .previewNote {
     grid-column: 1 / -1;
   }
 
+  .previewContentFrame {
+    min-width: 0;
+    margin-top: 0;
+  }
+
   .previewContent {
     max-height: 330px;
-    margin-top: 0;
   }
 }
 
@@ -834,7 +1009,11 @@
     display: block;
   }
 
-  .previewContent {
+  .previewScrollLegendPanel {
+    display: none !important;
+  }
+
+  .previewContentFrame {
     margin-top: 10px;
   }
 }
@@ -888,5 +1067,151 @@
 
   .previewMeta {
     grid-template-columns: 1fr;
+  }
+}
+
+.saveDialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  padding: 22px;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(7px);
+  animation: rulesDialogBackdropIn 0.18s ease-out;
+}
+
+.saveDialog {
+  width: min(520px, 100%);
+  padding: 25px;
+  color: white;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(239, 27, 27, 0.14), transparent 36%),
+    linear-gradient(145deg, rgba(18, 19, 24, 0.99), rgba(7, 8, 11, 0.99));
+  border: 1px solid rgba(239, 27, 27, 0.34);
+  border-radius: 17px;
+  box-shadow: 0 30px 110px rgba(0, 0, 0, 0.7);
+  animation: rulesDialogIn 0.2s ease-out;
+}
+
+.saveDialogIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 17px;
+  display: grid;
+  place-items: center;
+  color: #fecaca;
+  background: rgba(239, 27, 27, 0.11);
+  border: 1px solid rgba(239, 27, 27, 0.33);
+  border-radius: 12px;
+  font-size: 21px;
+}
+
+.saveDialog > span {
+  color: #ef4444;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 1.25px;
+}
+
+.saveDialog h2 {
+  margin: 7px 0 10px;
+  font-size: 25px;
+  line-height: 1.1;
+  font-weight: 1000;
+  letter-spacing: -0.6px;
+}
+
+.saveDialog p {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 12px;
+  line-height: 1.6;
+  font-weight: 650;
+}
+
+.saveDialogDate {
+  margin: 17px 0;
+  padding: 12px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 10px;
+}
+
+.saveDialogDate span {
+  color: #71717a;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.saveDialogDate b {
+  color: #e4e4e7;
+  font-size: 10px;
+  font-weight: 950;
+  text-align: right;
+}
+
+.saveDialogActions {
+  display: grid;
+  gap: 8px;
+}
+
+.saveDialogActions button {
+  min-height: 44px;
+  padding: 0 13px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 950;
+  transition: 0.18s;
+}
+
+.saveDialogActions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.saveDialogActions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.saveAndUpdateButton {
+  color: white;
+  background: linear-gradient(135deg, #ef1b1b, #991b1b);
+  border: 1px solid rgba(248, 113, 113, 0.42);
+}
+
+.saveWithoutDateButton {
+  color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cancelSaveButton {
+  color: #71717a;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+@keyframes rulesDialogBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rulesDialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

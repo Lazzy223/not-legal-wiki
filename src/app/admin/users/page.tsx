@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatMoscowDate } from "@/lib/moscow-time";
 import styles from "./users.module.css";
 
 type AuthUser = {
@@ -43,17 +44,15 @@ type Tab = "users" | "roles";
 function formatDate(value: string) {
   if (!value) return "Системный аккаунт";
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+    value
+  );
 }
 
 export default function AdminUsersPage() {

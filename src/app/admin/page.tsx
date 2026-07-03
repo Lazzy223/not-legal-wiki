@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminProfileMenu from "@/components/admin-profile-menu";
+import { formatMoscowDate, formatMoscowTime } from "@/lib/moscow-time";
 import styles from "./admin.module.css";
 
 type AuthUser = {
@@ -31,17 +31,15 @@ type RuleSection = {
 };
 
 function formatDate(value?: string) {
-  if (!value) return "Без даты";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+    value || "Без даты"
+  );
 }
 
 function getRuleUpdatedAt(section: RuleSection) {
@@ -133,12 +131,12 @@ export default function AdminPage() {
   const adminName =
     user?.username?.trim() || user?.login?.trim() || "Администратор";
 
-  const formattedTime = now.toLocaleTimeString("ru-RU", {
+  const formattedTime = formatMoscowTime(now, {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  const formattedDate = now.toLocaleDateString("ru-RU", {
+  const formattedDate = formatMoscowDate(now, {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -156,66 +154,6 @@ export default function AdminPage() {
 
   return (
     <main className={styles.page}>
-      <aside className={styles.sidebar}>
-        <Link href="/" className={styles.logo}>
-          <span>NOT LEGAL</span>
-          <b>RP</b>
-        </Link>
-
-        <div className={styles.sideLabel}>Управление</div>
-
-        <nav className={styles.sideNav}>
-          <Link href="/admin" className={styles.sideNavActive}>
-            <span>⌂</span>
-            Обзор
-          </Link>
-
-          <Link href="/admin/changelog">
-            <span>▤</span>
-            Dev Blog
-          </Link>
-
-          <Link href="/admin/rules">
-            <span>▣</span>
-            Правила
-          </Link>
-
-          {user?.canManageUsers ? (
-            <Link href="/admin/users">
-              <span>◉</span>
-              Пользователи
-            </Link>
-          ) : (
-            <div className={styles.disabledNav}>
-              <span>◉</span>
-              Пользователи
-              <small>Нет доступа</small>
-            </div>
-          )}
-        </nav>
-
-        <div className={styles.sideLabel}>Просмотр</div>
-
-        <nav className={styles.sideNav}>
-          <Link href="/wiki">
-            <span>◇</span>
-            Wiki
-          </Link>
-
-          <Link href="/wiki/changelog">
-            <span>↗</span>
-            Dev Blog
-          </Link>
-
-          <Link href="/wiki/rules">
-            <span>⌑</span>
-            Правила
-          </Link>
-        </nav>
-
-        <AdminProfileMenu user={user} />
-      </aside>
-
       <section className={styles.workspace}>
         <header className={styles.topbar}>
           <div>
@@ -225,7 +163,7 @@ export default function AdminPage() {
 
           <div className={styles.topbarRight}>
             <div className={styles.timeCard}>
-              <strong>{formattedTime}</strong>
+              <strong>{formattedTime} МСК</strong>
               <span>{formattedDate}</span>
             </div>
 

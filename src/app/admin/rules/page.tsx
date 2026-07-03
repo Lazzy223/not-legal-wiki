@@ -9,6 +9,7 @@ import {
   stripRuleHtml,
 } from "@/lib/rules-content";
 import type { RuleSection } from "@/lib/rules-store";
+import { formatMoscowDate, parseMoscowDate } from "@/lib/moscow-time";
 import styles from "./rules-admin.module.css";
 
 function defaultRulesContent() {
@@ -27,19 +28,19 @@ function defaultRulesContent() {
 function formatDate(value?: string) {
   if (!value) return "Ещё не сохранялся";
 
-  const date = new Date(value);
+  const date = parseMoscowDate(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return value;
   }
 
-  return date.toLocaleString("ru-RU", {
+  return `${formatMoscowDate(date, {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })} МСК`;
 }
 
 function nextSectionOrder(sections: RuleSection[]) {
@@ -68,6 +69,7 @@ export default function AdminRulesPage() {
   );
   const [loading, setLoading] = useState(false);
   const [sectionsLoading, setSectionsLoading] = useState(true);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const sortedSections = useMemo(() => {
     return [...sections].sort((first, second) => {
@@ -168,6 +170,25 @@ export default function AdminRulesPage() {
   }
 
   useEffect(() => {
+    if (!saveDialogOpen) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !loading) {
+        setSaveDialogOpen(false);
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [loading, saveDialogOpen]);
+
+  useEffect(() => {
     let cancelled = false;
 
     fetch("/api/admin/rules", { cache: "no-store" })
@@ -254,13 +275,29 @@ export default function AdminRulesPage() {
     setMessage("Создана копия в редакторе. Нажми «Создать раздел». ");
   }
 
-  async function saveSection() {
+  function requestSaveSection() {
     if (!isFormReady) {
       setMessageType("error");
       setMessage("Укажи название и добавь текст правил");
       return;
     }
 
+    if (editingId) {
+      setSaveDialogOpen(true);
+      return;
+    }
+
+    void saveSection(true);
+  }
+
+  async function saveSection(updateUpdatedAt: boolean) {
+    if (!isFormReady) {
+      setMessageType("error");
+      setMessage("Укажи название и добавь текст правил");
+      return;
+    }
+
+    setSaveDialogOpen(false);
     setLoading(true);
     setMessage("");
 
@@ -280,6 +317,7 @@ export default function AdminRulesPage() {
           sortOrder,
           version: version.trim(),
           contentHtml,
+          updateUpdatedAt,
         }),
       });
 
@@ -299,7 +337,13 @@ export default function AdminRulesPage() {
 
       await loadSections(savedId);
       setMessageType("success");
-      setMessage(editingId ? "Изменения сохранены" : "Раздел создан");
+      setMessage(
+        editingId
+          ? updateUpdatedAt
+            ? "Изменения сохранены, дата обновления изменена"
+            : "Изменения сохранены без изменения даты"
+          : "Раздел создан"
+      );
     } catch (error) {
       setMessageType("error");
       setMessage(error instanceof Error ? error.message : "Ошибка сохранения");
@@ -407,7 +451,7 @@ export default function AdminRulesPage() {
               {formatDate(latestUpdatedAt)}
             </strong>
           </div>
-          <small>обновляется автоматически</small>
+          <small>обновляется после подтверждения</small>
         </article>
       </section>
 
@@ -591,7 +635,7 @@ export default function AdminRulesPage() {
           <div className={styles.formActions}>
             <button
               type="button"
-              onClick={saveSection}
+              onClick={requestSaveSection}
               disabled={loading || !isFormReady}
               className={styles.saveButton}
             >
@@ -626,13 +670,30 @@ export default function AdminRulesPage() {
           </div>
         </section>
 
-        <aside className={styles.previewPanel}>
+        <aside
+          className={styles.previewPanel}
+          aria-label="Панель предпросмотра раздела правил"
+        >
           <div className={styles.panelHeading}>
             <div>
               <span>03 / PREVIEW</span>
               <h2>Предпросмотр</h2>
             </div>
             <b>{currentRuleCount}</b>
+          </div>
+
+          <div
+            className={styles.previewScrollLegend}
+            aria-label="Обозначения полос прокрутки"
+          >
+            <span className={styles.previewScrollLegendPanel}>
+              <i aria-hidden="true" />
+              Красный — вся панель
+            </span>
+            <span className={styles.previewScrollLegendRules}>
+              <i aria-hidden="true" />
+              Жёлтый — текст правил
+            </span>
           </div>
 
           <article className={styles.previewCard}>
@@ -663,8 +724,23 @@ export default function AdminRulesPage() {
             </div>
           </article>
 
-          <div className={styles.previewContent}>
-            <WikiContent html={contentHtml} />
+          <div className={styles.previewContentFrame}>
+            <div className={styles.previewContentHeader}>
+              <div>
+                <span>ТЕКСТ ПРАВИЛ</span>
+                <small>Прокручивается отдельно</small>
+              </div>
+              <b aria-hidden="true">↕</b>
+            </div>
+
+            <div
+              className={styles.previewContent}
+              role="region"
+              aria-label="Прокрутка текста правил"
+              tabIndex={0}
+            >
+              <WikiContent html={contentHtml} />
+            </div>
           </div>
 
           <div className={styles.previewNote}>
@@ -673,6 +749,67 @@ export default function AdminRulesPage() {
           </div>
         </aside>
       </section>
+
+      {saveDialogOpen && (
+        <div
+          className={styles.saveDialogBackdrop}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target && !loading) {
+              setSaveDialogOpen(false);
+            }
+          }}
+        >
+          <section
+            className={styles.saveDialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rules-save-dialog-title"
+          >
+            <div className={styles.saveDialogIcon}>◷</div>
+            <span>ПОДТВЕРЖДЕНИЕ СОХРАНЕНИЯ</span>
+            <h2 id="rules-save-dialog-title">Обновить дату правил?</h2>
+            <p>
+              Выбери, считать ли это изменение официальным обновлением правил.
+              Небольшую техническую правку можно сохранить без изменения даты.
+            </p>
+
+            <div className={styles.saveDialogDate}>
+              <span>Текущая дата раздела</span>
+              <b>{formatDate(updatedAt)}</b>
+            </div>
+
+            <div className={styles.saveDialogActions}>
+              <button
+                type="button"
+                className={styles.saveAndUpdateButton}
+                onClick={() => void saveSection(true)}
+                disabled={loading}
+              >
+                Сохранить и обновить дату
+              </button>
+
+              <button
+                type="button"
+                className={styles.saveWithoutDateButton}
+                onClick={() => void saveSection(false)}
+                disabled={loading}
+              >
+                Сохранить без изменения даты
+              </button>
+
+              <button
+                type="button"
+                className={styles.cancelSaveButton}
+                onClick={() => setSaveDialogOpen(false)}
+                disabled={loading}
+              >
+                Отмена
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangelogPost } from "@/lib/changelog-store";
+import {
+  formatMoscowTime,
+  MOSCOW_TIME_ZONE,
+  parseMoscowDate,
+} from "@/lib/moscow-time";
 import styles from "./devblog-post-card.module.css";
 
 type DevBlogPostCardProps = {
@@ -53,9 +58,9 @@ const shortMonthNames = [
 ];
 
 function formatDate(value: string) {
-  const date = new Date(value);
+  const date = parseMoscowDate(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return {
       day: "--",
       month: "—",
@@ -65,22 +70,34 @@ function formatDate(value: string) {
     };
   }
 
+  const parts = new Intl.DateTimeFormat("ru-RU", {
+    timeZone: MOSCOW_TIME_ZONE,
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+  }).formatToParts(date);
+
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  const day = Number(values.get("day") || 0);
+  const monthIndex = Math.max(0, Number(values.get("month") || 1) - 1);
+  const year = values.get("year") || "";
+
   return {
-    day: String(date.getDate()),
-    month: shortMonthNames[date.getMonth()],
-    year: String(date.getFullYear()),
-    fullDate: `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`,
-    time: date.toLocaleTimeString("ru-RU", {
+    day: String(day),
+    month: shortMonthNames[monthIndex],
+    year,
+    fullDate: `${day} ${monthNames[monthIndex]} ${year}`,
+    time: `${formatMoscowTime(date, {
       hour: "2-digit",
       minute: "2-digit",
-    }),
+    })} МСК`,
   };
 }
 
 function isPostNew(value: string) {
-  const postDate = new Date(value);
+  const postDate = parseMoscowDate(value);
 
-  if (Number.isNaN(postDate.getTime())) {
+  if (!postDate) {
     return false;
   }
 

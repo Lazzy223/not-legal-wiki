@@ -6,6 +6,7 @@ import Link from "next/link";
 import DevBlogPostCard from "@/components/devblog-post-card";
 import PostViews from "@/components/post-views";
 import type { ChangelogPost } from "@/lib/changelog-store";
+import { formatMoscowDate } from "@/lib/moscow-time";
 import styles from "./devblog.module.css";
 
 type DevBlogProps = {
@@ -119,17 +120,15 @@ function getSuggestionSnippet(text: string, query: string) {
 }
 
 function formatSuggestionDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Без даты";
-  }
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    },
+    "Без даты"
+  );
 }
 
 export default function DevBlog({ posts, showAdminButton = false }: DevBlogProps) {

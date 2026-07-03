@@ -12,22 +12,21 @@ import {
   ruleSectionMatches,
 } from "@/lib/rules-content";
 import type { RuleSection } from "@/lib/rules-store";
+import { formatMoscowDate } from "@/lib/moscow-time";
 import styles from "./rules.module.css";
 
 function formatSectionDate(value?: string) {
   if (!value) return "Не указано";
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+    value
+  );
 }
 
 export default function RulesPage() {

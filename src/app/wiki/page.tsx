@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import StartGuideModal from "@/components/start-guide-modal";
 import WikiTopActions from "@/components/wiki-top-actions";
+import { formatMoscowDate } from "@/lib/moscow-time";
 import styles from "./wiki.module.css";
 
 type LatestUpdate = {
@@ -52,17 +53,15 @@ function formatViews(value: number) {
 }
 
 function formatUpdateDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Без даты";
-  }
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    },
+    "Без даты"
+  );
 }
 
 const categories = [

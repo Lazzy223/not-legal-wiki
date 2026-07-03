@@ -6,6 +6,7 @@ import Link from "next/link";
 import TextEditor from "@/components/text-editor";
 import DevBlogPostCard from "@/components/devblog-post-card";
 import type { ChangelogPost } from "@/lib/changelog-store";
+import { formatMoscowDate, toMoscowDateTimeLocalValue } from "@/lib/moscow-time";
 import styles from "./changelog-admin.module.css";
 
 type EditorTab = "updates" | "fixes";
@@ -17,11 +18,7 @@ type AdminChangelogPost = ChangelogPost & {
 };
 
 function getNowInputValue() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - offset * 60 * 1000);
-
-  return local.toISOString().slice(0, 16);
+  return toMoscowDateTimeLocalValue(new Date());
 }
 
 function toDateTimeLocalValue(value: string) {
@@ -29,30 +26,19 @@ function toDateTimeLocalValue(value: string) {
     return getNowInputValue();
   }
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 16);
-  }
-
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60 * 1000);
-
-  return local.toISOString().slice(0, 16);
+  return toMoscowDateTimeLocalValue(value) || value.slice(0, 16);
 }
 
 function formatPostDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value ? value.replace("T", " ") : "Без даты";
-  }
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+    value ? value.replace("T", " ") : "Без даты"
+  );
 }
 
 function arrayToHtmlList(value: string[]) {
@@ -519,7 +505,7 @@ export default function AdminChangelogPage() {
             </label>
 
             <label>
-              <span>Дата и время</span>
+              <span>Дата и время (МСК)</span>
 
               <input
                 value={publishedAt}

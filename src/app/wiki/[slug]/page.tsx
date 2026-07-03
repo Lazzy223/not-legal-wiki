@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import WikiContent from "@/components/wiki-content";
 import { getArticleBySlug } from "@/lib/articles-store";
+import { formatMoscowDate } from "@/lib/moscow-time";
 import styles from "./article-page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -17,17 +18,15 @@ function formatDate(value: string) {
     return "Дата не указана";
   }
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatMoscowDate(
+    value,
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+    value
+  );
 }
 
 function prepareHtmlContent(value: string) {

@@ -1,7 +1,6 @@
 .page {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 270px minmax(0, 1fr);
+  display: block;
   color: #f8fafc;
   background:
     radial-gradient(circle at 75% 0%, rgba(239, 27, 27, 0.1), transparent 28%),
@@ -134,7 +133,7 @@
 .sidebarFooter strong { overflow: hidden; color: white; font-size: 12px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
 .sidebarFooter span { color: #71717a; font-size: 10px; font-weight: 750; }
 
-.workspace { min-width: 0; padding: 26px 32px 50px; }
+.workspace { width: min(1580px, 100%); min-width: 0; margin: 0 auto; padding: 26px 32px 50px; }
 
 .topbar {
   min-height: 70px;
@@ -271,14 +270,10 @@
 .emptyState { padding: 20px; color: #71717a; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.07); border-radius: 9px; text-align: center; font-size: 11px; font-weight: 750; }
 
 @media (max-width: 1120px) {
-  .page { grid-template-columns: 220px minmax(0, 1fr); }
   .statsGrid, .modulesGrid, .bottomGrid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {
-  .page { display: block; }
-  .sidebar { position: static; width: 100%; height: auto; }
-  .sideNav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workspace { padding: 20px 14px 40px; }
   .topbar { align-items: flex-start; flex-direction: column; }
   .topbarRight { width: 100%; justify-content: space-between; }

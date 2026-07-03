@@ -109,7 +109,9 @@ export async function PUT(request: Request) {
       );
     }
 
-    const section = await updateRuleSection(id, normalizePayload(body));
+    const section = await updateRuleSection(id, normalizePayload(body), {
+      updateTimestamp: body.updateUpdatedAt !== false,
+    });
 
     if (!section) {
       return NextResponse.json(

@@ -146,7 +146,11 @@ export async function createRuleSection(data: RuleSectionInput) {
   return section;
 }
 
-export async function updateRuleSection(id: string, data: RuleSectionInput) {
+export async function updateRuleSection(
+  id: string,
+  data: RuleSectionInput,
+  options: { updateTimestamp?: boolean } = {}
+) {
   const sections = await getRuleSections();
   const index = sections.findIndex((section) => section.id === id);
 
@@ -163,7 +167,10 @@ export async function updateRuleSection(id: string, data: RuleSectionInput) {
     description: String(data.description || "").trim(),
     sortOrder: normalizeSortOrder(data.sortOrder, sections[index].sortOrder),
     version: String(data.version || sections[index].version || "1.0").trim(),
-    updatedAt: new Date().toISOString(),
+    updatedAt:
+      options.updateTimestamp === false
+        ? sections[index].updatedAt
+        : new Date().toISOString(),
     contentHtml: String(data.contentHtml || "<p></p>"),
     blocks: Array.isArray(data.blocks) ? data.blocks : [],
   };
