@@ -1,6 +1,6 @@
 import path from "node:path";
-import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 
 export type RuleBlock = {
   title: string;
@@ -15,9 +15,13 @@ export type RuleSection = {
   short: string;
   description: string;
   sortOrder: number;
+  version: string;
+  updatedAt: string;
   contentHtml?: string;
   blocks: RuleBlock[];
 };
+
+type RuleSectionInput = Omit<RuleSection, "id" | "updatedAt">;
 
 const filePath = path.join(process.cwd(), "src", "data", "rules-db.json");
 
@@ -28,19 +32,20 @@ function blocksToHtml(blocks?: RuleBlock[]) {
 
   return blocks
     .map((block) => {
-      const items = block.items
-        .map((item) => `<li>${item}</li>`)
-        .join("");
-
+      const items = block.items.map((item) => `<li>${item}</li>`).join("");
       return `<h2>${block.title}</h2><ul>${items}</ul>`;
     })
     .join("");
 }
 
+function normalizeSortOrder(value: unknown, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 async function loadInitialRules(): Promise<RuleSection[]> {
   try {
     const rulesModule = await import("@/data/rules");
-
     const staticRules = rulesModule.rulesSections || [];
 
     return staticRules.map((section: Partial<RuleSection>, index: number) => ({
@@ -50,10 +55,9 @@ async function loadInitialRules(): Promise<RuleSection[]> {
       title: String(section.title || "Раздел правил"),
       short: String(section.short || ""),
       description: String(section.description || ""),
-      sortOrder:
-        typeof section.sortOrder === "number"
-          ? section.sortOrder
-          : (index + 1) * 10,
+      sortOrder: normalizeSortOrder(section.sortOrder, (index + 1) * 10),
+      version: String(section.version || "1.0"),
+      updatedAt: String(section.updatedAt || ""),
       contentHtml: section.contentHtml || blocksToHtml(section.blocks),
       blocks: Array.isArray(section.blocks) ? section.blocks : [],
     }));
@@ -62,7 +66,10 @@ async function loadInitialRules(): Promise<RuleSection[]> {
   }
 }
 
-function normalizeSection(section: Partial<RuleSection>, index: number): RuleSection {
+function normalizeSection(
+  section: Partial<RuleSection>,
+  index: number
+): RuleSection {
   const blocks = Array.isArray(section.blocks)
     ? section.blocks.map((block) => ({
         title: String(block.title || "Блок правил").trim(),
@@ -79,10 +86,9 @@ function normalizeSection(section: Partial<RuleSection>, index: number): RuleSec
     title: String(section.title || "Раздел правил").trim(),
     short: String(section.short || "").trim(),
     description: String(section.description || "").trim(),
-    sortOrder:
-      typeof section.sortOrder === "number"
-        ? section.sortOrder
-        : Number(section.sortOrder || (index + 1) * 10),
+    sortOrder: normalizeSortOrder(section.sortOrder, (index + 1) * 10),
+    version: String(section.version || "1.0").trim(),
+    updatedAt: String(section.updatedAt || ""),
     contentHtml: String(section.contentHtml || blocksToHtml(blocks)),
     blocks,
   };
@@ -94,7 +100,7 @@ function sortSections(sections: RuleSection[]) {
       return a.sortOrder - b.sortOrder;
     }
 
-    return a.number.localeCompare(b.number);
+    return a.number.localeCompare(b.number, "ru", { numeric: true });
   });
 }
 
@@ -111,38 +117,36 @@ export async function getRuleSections(): Promise<RuleSection[]> {
 }
 
 async function saveRuleSections(sections: RuleSection[]) {
-  await writeJsonStore(
-    { key: "rules", filePath },
-    sortSections(sections)
-  );
+  await writeJsonStore({ key: "rules", filePath }, sortSections(sections));
 }
 
-export async function createRuleSection(data: Omit<RuleSection, "id">) {
+export async function createRuleSection(data: RuleSectionInput) {
   const sections = await getRuleSections();
+  const now = new Date().toISOString();
 
   const section: RuleSection = {
     id: randomUUID(),
-    number: String(data.number || String(sections.length + 1).padStart(2, "0")),
+    number: String(
+      data.number || String(sections.length + 1).padStart(2, "0")
+    ),
     icon: String(data.icon || "📜"),
     title: String(data.title || "Новый раздел правил").trim(),
     short: String(data.short || "").trim(),
     description: String(data.description || "").trim(),
-    sortOrder: Number(data.sortOrder || 999),
+    sortOrder: normalizeSortOrder(data.sortOrder, (sections.length + 1) * 10),
+    version: String(data.version || "1.0").trim(),
+    updatedAt: now,
     contentHtml: String(data.contentHtml || "<p></p>"),
     blocks: Array.isArray(data.blocks) ? data.blocks : [],
   };
 
   sections.push(section);
-
   await saveRuleSections(sections);
 
   return section;
 }
 
-export async function updateRuleSection(
-  id: string,
-  data: Omit<RuleSection, "id">
-) {
+export async function updateRuleSection(id: string, data: RuleSectionInput) {
   const sections = await getRuleSections();
   const index = sections.findIndex((section) => section.id === id);
 
@@ -157,7 +161,9 @@ export async function updateRuleSection(
     title: String(data.title || "Раздел правил").trim(),
     short: String(data.short || "").trim(),
     description: String(data.description || "").trim(),
-    sortOrder: Number(data.sortOrder || 999),
+    sortOrder: normalizeSortOrder(data.sortOrder, sections[index].sortOrder),
+    version: String(data.version || sections[index].version || "1.0").trim(),
+    updatedAt: new Date().toISOString(),
     contentHtml: String(data.contentHtml || "<p></p>"),
     blocks: Array.isArray(data.blocks) ? data.blocks : [],
   };

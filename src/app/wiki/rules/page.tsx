@@ -4,35 +4,18 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import WikiContent from "@/components/wiki-content";
 import WikiTopActions from "@/components/wiki-top-actions";
+import {
+  addRuleHeadingAnchors,
+  extractRuleHeadings,
+  getRuleItemCount,
+  getRuleSectionHtml,
+  ruleSectionMatches,
+} from "@/lib/rules-content";
 import type { RuleSection } from "@/lib/rules-store";
 import styles from "./rules.module.css";
 
-type RuleSectionWithMeta = RuleSection & {
-  updatedAt?: string;
-  updated?: string;
-  lastUpdated?: string;
-  modifiedAt?: string;
-  version?: string;
-};
-
-function getSectionUpdatedValue(section?: RuleSectionWithMeta) {
-  if (!section) return "";
-
-  return (
-    section.updatedAt ||
-    section.updated ||
-    section.lastUpdated ||
-    section.modifiedAt ||
-    ""
-  );
-}
-
-function formatSectionDate(section?: RuleSectionWithMeta) {
-  const value = getSectionUpdatedValue(section);
-
-  if (!value) {
-    return "Не указано";
-  }
+function formatSectionDate(value?: string) {
+  if (!value) return "Не указано";
 
   const date = new Date(value);
 
@@ -47,96 +30,45 @@ function formatSectionDate(section?: RuleSectionWithMeta) {
   });
 }
 
-function getRuleCount(section: RuleSectionWithMeta) {
-  const blocksCount = (section.blocks || []).reduce((total, block) => {
-    return total + (block.items?.length || 0);
-  }, 0);
-
-  if (blocksCount > 0) {
-    return blocksCount;
-  }
-
-  const html = section.contentHtml || "";
-  const listItems = html.match(/<li\b[^>]*>/gi);
-
-  return listItems?.length || 0;
-}
-
-function makeAnchor(value: string, index: number) {
-  const slug = value
-    .toLowerCase()
-    .replace(/ё/g, "е")
-    .replace(/[^a-zа-я0-9]+/gi, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return `rule-section-${slug || index + 1}`;
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function HighlightedText({
-  text,
-  query,
-}: {
-  text: string;
-  query: string;
-}) {
-  const cleanQuery = query.trim();
-
-  if (!cleanQuery) {
-    return <>{text}</>;
-  }
-
-  const parts = text.split(
-    new RegExp(`(${escapeRegExp(cleanQuery)})`, "gi")
-  );
-
-  return (
-    <>
-      {parts.map((part, index) => {
-        if (part.toLowerCase() === cleanQuery.toLowerCase()) {
-          return (
-            <mark className={styles.searchMatch} key={`${part}-${index}`}>
-              {part}
-            </mark>
-          );
-        }
-
-        return <span key={`${part}-${index}`}>{part}</span>;
-      })}
-    </>
-  );
-}
-
 export default function RulesPage() {
-  const [rulesSections, setRulesSections] = useState<RuleSectionWithMeta[]>([]);
+  const [rulesSections, setRulesSections] = useState<RuleSection[]>([]);
   const [activeId, setActiveId] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     async function loadRules() {
+      setLoading(true);
+      setLoadError("");
+
       try {
         const response = await fetch("/api/wiki/rules", {
           cache: "no-store",
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
-          return;
+          throw new Error(data?.message || "Не удалось загрузить правила");
         }
 
-        const sections = (data.sections || []) as RuleSectionWithMeta[];
+        const sections = Array.isArray(data?.sections)
+          ? (data.sections as RuleSection[])
+          : [];
 
         setRulesSections(sections);
 
         if (sections.length > 0) {
           setActiveId((current) => current || sections[0].id);
         }
+      } catch (error) {
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Не удалось загрузить правила"
+        );
       } finally {
         setLoading(false);
       }
@@ -151,81 +83,53 @@ export default function RulesPage() {
         event.preventDefault();
         searchInputRef.current?.focus();
       }
+
+      if (event.key === "Escape" && document.activeElement === searchInputRef.current) {
+        setSearch("");
+        searchInputRef.current?.blur();
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const visibleSections = useMemo(() => {
+    return rulesSections.filter((section) => ruleSectionMatches(section, search));
+  }, [rulesSections, search]);
 
   const activeSection = useMemo(() => {
     return (
-      rulesSections.find((section) => section.id === activeId) ||
-      rulesSections[0]
+      visibleSections.find((section) => section.id === activeId) ||
+      visibleSections[0] ||
+      null
     );
-  }, [activeId, rulesSections]);
+  }, [activeId, visibleSections]);
 
-  const filteredRules = useMemo(() => {
-    if (!activeSection) return [];
+  const activeHtml = useMemo(() => {
+    if (!activeSection) return "";
+    return addRuleHeadingAnchors(getRuleSectionHtml(activeSection));
+  }, [activeSection]);
 
-    const query = search.trim().toLowerCase();
+  const activeHeadings = useMemo(() => {
+    return extractRuleHeadings(activeHtml);
+  }, [activeHtml]);
 
-    if (!query) {
-      return activeSection.blocks || [];
-    }
+  const totalRules = useMemo(() => {
+    return rulesSections.reduce(
+      (total, section) => total + getRuleItemCount(section),
+      0
+    );
+  }, [rulesSections]);
 
-    return (activeSection.blocks || [])
-      .map((block) => ({
-        ...block,
-        items: (block.items || []).filter((item) =>
-          item.toLowerCase().includes(query)
-        ),
-      }))
-      .filter((block) => {
-        return (
-          block.title.toLowerCase().includes(query) || block.items.length > 0
-        );
-      });
-  }, [activeSection, search]);
-
-  const hasRichContent = Boolean(activeSection?.contentHtml?.trim());
-  const activeUpdatedAt = formatSectionDate(activeSection);
-  const activeVersion = activeSection?.version || "2.7.0";
+  const activeRuleCount = getRuleItemCount(activeSection || undefined);
+  const activeUpdatedAt = formatSectionDate(activeSection?.updatedAt);
+  const activeVersion = activeSection?.version || "1.0";
 
   function chooseSection(id: string) {
     setActiveId(id);
-    setSearch("");
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 270, behavior: "smooth" });
   }
-
-  function scrollToTop() {
-  const startPosition = window.scrollY;
-  const duration = 750;
-  const startTime = performance.now();
-
-  function animateScroll(currentTime: number) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    const easedProgress = 1 - Math.pow(1 - progress, 4);
-
-    window.scrollTo({
-      top: startPosition * (1 - easedProgress),
-      left: 0,
-    });
-
-    if (progress < 1) {
-      requestAnimationFrame(animateScroll);
-    }
-  }
-
-  requestAnimationFrame(animateScroll);
-}
 
   return (
     <main className={styles.page}>
@@ -250,10 +154,22 @@ export default function RulesPage() {
             ref={searchInputRef}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Поиск по правилам..."
+            placeholder="Поиск по всем правилам..."
+            aria-label="Поиск по правилам"
           />
 
-          <kbd>Ctrl + K</kbd>
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className={styles.clearSearch}
+              aria-label="Очистить поиск"
+            >
+              ×
+            </button>
+          ) : (
+            <kbd>Ctrl + K</kbd>
+          )}
         </div>
 
         <WikiTopActions />
@@ -269,11 +185,12 @@ export default function RulesPage() {
             <b>Правила</b>
           </div>
 
+          <span className={styles.heroEyebrow}>NOT LEGAL ROLE PLAY</span>
           <h1>Правила проекта</h1>
 
           <p>
-            Здесь собраны все важные правила проекта Not Legal RP.
-            Незнание правил не освобождает от ответственности.
+            Единый свод правил Not Legal RP. Перед началом игры ознакомься с
+            каждым разделом — незнание правил не освобождает от ответственности.
           </p>
         </div>
 
@@ -282,39 +199,84 @@ export default function RulesPage() {
 
       <section className={styles.statsBar}>
         <div className={styles.statItem}>
-          <span>◷</span>
-          <div>
-            <small>Обновление раздела</small>
-            <b>{activeUpdatedAt}</b>
-          </div>
-        </div>
-
-        <div className={styles.statItem}>
-          <span>▧</span>
-          <div>
-            <small>Версия правил</small>
-            <b>{activeVersion}</b>
-          </div>
-        </div>
-
-        <div className={styles.statItem}>
           <span>▤</span>
           <div>
             <small>Разделов правил</small>
             <b>{rulesSections.length}</b>
           </div>
         </div>
+
+        <div className={styles.statItem}>
+          <span>≡</span>
+          <div>
+            <small>Всего пунктов</small>
+            <b>{totalRules}</b>
+          </div>
+        </div>
+
+        <div className={styles.statItem}>
+          <span>◷</span>
+          <div>
+            <small>Активный раздел</small>
+            <b>
+              v{activeVersion} · {activeUpdatedAt}
+            </b>
+          </div>
+        </div>
       </section>
 
       {loading && (
         <section className={styles.loadingState}>
-          Загрузка правил сервера...
+          <div className={styles.loader} />
+          <div>
+            <b>Загружаем правила</b>
+            <span>Подготавливаем актуальную редакцию разделов...</span>
+          </div>
         </section>
       )}
 
-      {!loading && rulesSections.length === 0 && (
+      {!loading && loadError && (
+        <section className={`${styles.loadingState} ${styles.errorState}`}>
+          <span>!</span>
+          <div>
+            <b>Правила не загрузились</b>
+            <small>{loadError}</small>
+          </div>
+        </section>
+      )}
+
+      {!loading && !loadError && rulesSections.length === 0 && (
         <section className={styles.loadingState}>
           Правила пока не добавлены. Создай первый раздел через админ-панель.
+        </section>
+      )}
+
+      {!loading && !loadError && search && (
+        <section className={styles.searchSummary}>
+          <div>
+            <span>⌕</span>
+            <p>
+              По запросу <b>«{search}»</b> найдено разделов: {visibleSections.length}
+            </p>
+          </div>
+
+          <button type="button" onClick={() => setSearch("")}>
+            Сбросить поиск
+          </button>
+        </section>
+      )}
+
+      {!loading && !loadError && search && visibleSections.length === 0 && (
+        <section className={styles.noGlobalResults}>
+          <span>⌕</span>
+          <h2>Ничего не найдено</h2>
+          <p>
+            Попробуй изменить формулировку запроса или выбери раздел вручную
+            после сброса поиска.
+          </p>
+          <button type="button" onClick={() => setSearch("")}>
+            Показать все правила
+          </button>
         </section>
       )}
 
@@ -322,12 +284,15 @@ export default function RulesPage() {
         <section className={styles.layout}>
           <aside className={styles.sidebar}>
             <div className={styles.sidebarHead}>
-              <span>Разделы</span>
-              <b>{rulesSections.length}</b>
+              <div>
+                <span>Разделы</span>
+                <small>Выбери категорию правил</small>
+              </div>
+              <b>{visibleSections.length}</b>
             </div>
 
             <div className={styles.tabs}>
-              {rulesSections.map((section) => {
+              {visibleSections.map((section) => {
                 const active = section.id === activeSection.id;
 
                 return (
@@ -342,14 +307,15 @@ export default function RulesPage() {
                     <div className={styles.tabIcon}>{section.icon}</div>
 
                     <div className={styles.tabText}>
+                      <span>
+                        {section.number} · v{section.version || "1.0"}
+                      </span>
                       <strong>{section.title}</strong>
-                      <small>
-                        Обновлено: {formatSectionDate(section)}
-                      </small>
+                      <small>{section.short || "Раздел правил проекта"}</small>
                     </div>
 
                     <span className={styles.tabCount}>
-                      {getRuleCount(section)}
+                      {getRuleItemCount(section)}
                     </span>
                   </button>
                 );
@@ -359,103 +325,75 @@ export default function RulesPage() {
 
           <section className={styles.content}>
             <div className={styles.contentHeader}>
-              <div className={styles.contentHeaderIcon}>
-                {activeSection.icon}
-              </div>
+              <div className={styles.contentHeaderIcon}>{activeSection.icon}</div>
 
-              <div>
-                <span>{activeSection.number}</span>
+              <div className={styles.contentHeaderText}>
+                <div className={styles.contentKicker}>
+                  <span>Раздел {activeSection.number}</span>
+                  <b>Версия {activeVersion}</b>
+                </div>
+
                 <h2>{activeSection.title}</h2>
-                <p>{activeSection.description}</p>
+                <p>
+                  {activeSection.description ||
+                    activeSection.short ||
+                    "Актуальная редакция правил выбранного раздела."}
+                </p>
 
-                <div className={styles.sectionUpdated}>
-                  <span>◷</span>
-                  Обновлено: {activeUpdatedAt}
+                <div className={styles.contentMeta}>
+                  <span>◷ Обновлено: {activeUpdatedAt}</span>
+                  <span>≡ {activeRuleCount} пунктов</span>
                 </div>
               </div>
             </div>
 
-            {hasRichContent ? (
-              <div className={styles.richRulesContent}>
-                <WikiContent html={activeSection.contentHtml || ""} />
+            <div className={styles.noticeCard}>
+              <span>!</span>
+              <div>
+                <b>Обрати внимание</b>
+                <p>
+                  Администрация вправе оценивать ситуацию в полном контексте.
+                  Перед участием в игровом процессе проверь актуальность версии.
+                </p>
               </div>
-            ) : (
-              <>
-                {filteredRules.length === 0 && (
-                  <div className={styles.noResults}>
-                    По запросу ничего не найдено в выбранном разделе.
-                  </div>
-                )}
+            </div>
 
-                <div className={styles.rulesBlocks}>
-                  {filteredRules.map((block, blockIndex) => {
-                    const anchor = makeAnchor(block.title, blockIndex);
-
-                    return (
-                      <details
-                        id={anchor}
-                        className={styles.ruleBlock}
-                        open={blockIndex === 0}
-                        key={`${block.title}-${blockIndex}`}
-                      >
-                        <summary className={styles.ruleBlockSummary}>
-                          <div>
-                            <span>{blockIndex + 1}.</span>
-                            <h3>{block.title}</h3>
-                          </div>
-
-                          <div className={styles.ruleBlockMeta}>
-                            <small>{block.items.length} пунктов</small>
-                            <b>⌄</b>
-                          </div>
-                        </summary>
-
-                        <div className={styles.ruleItems}>
-                          {block.items.map((item, itemIndex) => (
-                            <article
-                              className={styles.ruleItem}
-                              key={`${block.title}-${itemIndex}`}
-                            >
-                              <div className={styles.ruleNumber}>
-                                {blockIndex + 1}.{itemIndex + 1}
-                              </div>
-
-                              <p>
-                                <HighlightedText
-                                  text={item}
-                                  query={search}
-                                />
-                              </p>
-                            </article>
-                          ))}
-                        </div>
-                      </details>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+            <article className={styles.richRulesContent}>
+              <WikiContent html={activeHtml} />
+            </article>
           </section>
 
           <aside className={styles.rightSidebar}>
             <div className={styles.sideCard}>
-              <h3>В этом разделе</h3>
-
-              <div className={styles.anchorList}>
-                {(activeSection.blocks || []).map((block, index) => (
-                  <a
-                    href={`#${makeAnchor(block.title, index)}`}
-                    key={`${block.title}-${index}`}
-                  >
-                    <span>{index + 1}.</span>
-                    {block.title}
-                  </a>
-                ))}
+              <div className={styles.sideCardHead}>
+                <h3>В этом разделе</h3>
+                <span>{activeHeadings.length}</span>
               </div>
+
+              {activeHeadings.length > 0 ? (
+                <div className={styles.anchorList}>
+                  {activeHeadings.map((heading, index) => (
+                    <a
+                      href={`#${heading.id}`}
+                      className={
+                        heading.level === 3 ? styles.anchorSubItem : ""
+                      }
+                      key={`${heading.id}-${index}`}
+                    >
+                      <span>{heading.level === 2 ? index + 1 : "•"}</span>
+                      {heading.text}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.emptyAnchors}>
+                  Добавь заголовки в редакторе — они появятся здесь автоматически.
+                </p>
+              )}
             </div>
 
             <div className={styles.sideCard}>
-              <h3>Полезно</h3>
+              <h3>Полезные ссылки</h3>
 
               <div className={styles.usefulLinks}>
                 <Link href="/wiki/support">⚑ Сообщить о нарушении</Link>
@@ -463,6 +401,12 @@ export default function RulesPage() {
                 <Link href="/wiki/faq">? Частые вопросы</Link>
                 <Link href="/wiki/support">◌ Связь с администрацией</Link>
               </div>
+            </div>
+
+            <div className={styles.versionCard}>
+              <span>Текущая редакция</span>
+              <strong>v{activeVersion}</strong>
+              <small>{activeUpdatedAt}</small>
             </div>
           </aside>
         </section>
@@ -504,7 +448,7 @@ export default function RulesPage() {
 
       <button
         type="button"
-        onClick={scrollToTop}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         className={styles.upButton}
         aria-label="Вернуться наверх"
       >

@@ -34,6 +34,31 @@ function errorResponse(error: unknown, fallback: string) {
   );
 }
 
+function normalizePayload(body: Record<string, unknown>) {
+  const title = String(body.title || "").trim();
+  const contentHtml = String(body.contentHtml || "").trim();
+
+  if (!title) {
+    throw new Error("Укажи название раздела правил");
+  }
+
+  if (!contentHtml || contentHtml === "<p></p>") {
+    throw new Error("Добавь текст правил");
+  }
+
+  return {
+    number: String(body.number || "").trim(),
+    icon: String(body.icon || "📜").trim() || "📜",
+    title,
+    short: String(body.short || "").trim(),
+    description: String(body.description || "").trim(),
+    sortOrder: Number(body.sortOrder),
+    version: String(body.version || "1.0").trim() || "1.0",
+    contentHtml,
+    blocks: [],
+  };
+}
+
 export async function GET() {
   const user = await requireAdmin();
 
@@ -57,18 +82,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
-
-    const section = await createRuleSection({
-      number: body.number,
-      icon: body.icon,
-      title: body.title,
-      short: body.short,
-      description: body.description,
-      sortOrder: Number(body.sortOrder || 999),
-      contentHtml: body.contentHtml,
-      blocks: [],
-    });
+    const body = (await request.json()) as Record<string, unknown>;
+    const section = await createRuleSection(normalizePayload(body));
 
     return NextResponse.json({ section });
   } catch (error) {
@@ -84,18 +99,17 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
+    const id = String(body.id || "");
 
-    const section = await updateRuleSection(String(body.id), {
-      number: body.number,
-      icon: body.icon,
-      title: body.title,
-      short: body.short,
-      description: body.description,
-      sortOrder: Number(body.sortOrder || 999),
-      contentHtml: body.contentHtml,
-      blocks: [],
-    });
+    if (!id) {
+      return NextResponse.json(
+        { message: "Не передан идентификатор раздела" },
+        { status: 400 }
+      );
+    }
+
+    const section = await updateRuleSection(id, normalizePayload(body));
 
     if (!section) {
       return NextResponse.json(
@@ -118,8 +132,8 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const body = await request.json();
-    const deleted = await deleteRuleSection(String(body.id));
+    const body = (await request.json()) as Record<string, unknown>;
+    const deleted = await deleteRuleSection(String(body.id || ""));
 
     if (!deleted) {
       return NextResponse.json(
