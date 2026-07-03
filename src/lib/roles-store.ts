@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
 
 export type RolePermissions = {
@@ -48,22 +48,6 @@ const defaultRoles: ManagedRole[] = [
     updatedAt: "2026-01-01T00:00:00.000Z",
   },
 ];
-
-async function ensureFile() {
-  const dir = path.dirname(filePath);
-
-  await fs.mkdir(dir, { recursive: true });
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(
-      filePath,
-      JSON.stringify(defaultRoles, null, 2),
-      "utf-8"
-    );
-  }
-}
 
 function normalizeSlug(value: string) {
   return value
@@ -126,20 +110,18 @@ function sortRoles(roles: ManagedRole[]) {
 }
 
 async function saveRoles(roles: ManagedRole[]) {
-  await ensureFile();
-
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(sortRoles(roles), null, 2),
-    "utf-8"
+  await writeJsonStore(
+    { key: "roles", filePath },
+    sortRoles(roles)
   );
 }
 
 export async function getManagedRoles() {
-  await ensureFile();
-
-  const file = await fs.readFile(filePath, "utf-8");
-  const rawRoles = JSON.parse(file) as Partial<ManagedRole>[];
+  const rawRoles = await readJsonStore<Partial<ManagedRole>[]>({
+    key: "roles",
+    filePath,
+    fallback: defaultRoles,
+  });
   const roles = Array.isArray(rawRoles)
     ? rawRoles.map(normalizeRole)
     : [];

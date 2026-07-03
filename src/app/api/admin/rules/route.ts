@@ -23,6 +23,17 @@ async function requireAdmin() {
   return user;
 }
 
+function errorResponse(error: unknown, fallback: string) {
+  console.error(fallback, error);
+
+  return NextResponse.json(
+    {
+      message: error instanceof Error ? error.message : fallback,
+    },
+    { status: 500 }
+  );
+}
+
 export async function GET() {
   const user = await requireAdmin();
 
@@ -30,9 +41,12 @@ export async function GET() {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const sections = await getRuleSections();
-
-  return NextResponse.json({ sections });
+  try {
+    const sections = await getRuleSections();
+    return NextResponse.json({ sections });
+  } catch (error) {
+    return errorResponse(error, "Не удалось загрузить правила");
+  }
 }
 
 export async function POST(request: Request) {
@@ -42,20 +56,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const section = await createRuleSection({
-    number: body.number,
-    icon: body.icon,
-    title: body.title,
-    short: body.short,
-    description: body.description,
-    sortOrder: Number(body.sortOrder || 999),
-    contentHtml: body.contentHtml,
-    blocks: [],
-  });
+    const section = await createRuleSection({
+      number: body.number,
+      icon: body.icon,
+      title: body.title,
+      short: body.short,
+      description: body.description,
+      sortOrder: Number(body.sortOrder || 999),
+      contentHtml: body.contentHtml,
+      blocks: [],
+    });
 
-  return NextResponse.json({ section });
+    return NextResponse.json({ section });
+  } catch (error) {
+    return errorResponse(error, "Ошибка сохранения раздела правил");
+  }
 }
 
 export async function PUT(request: Request) {
@@ -65,24 +83,31 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const section = await updateRuleSection(String(body.id), {
-    number: body.number,
-    icon: body.icon,
-    title: body.title,
-    short: body.short,
-    description: body.description,
-    sortOrder: Number(body.sortOrder || 999),
-    contentHtml: body.contentHtml,
-    blocks: [],
-  });
+    const section = await updateRuleSection(String(body.id), {
+      number: body.number,
+      icon: body.icon,
+      title: body.title,
+      short: body.short,
+      description: body.description,
+      sortOrder: Number(body.sortOrder || 999),
+      contentHtml: body.contentHtml,
+      blocks: [],
+    });
 
-  if (!section) {
-    return NextResponse.json({ message: "Раздел не найден" }, { status: 404 });
+    if (!section) {
+      return NextResponse.json(
+        { message: "Раздел не найден" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ section });
+  } catch (error) {
+    return errorResponse(error, "Ошибка обновления раздела правил");
   }
-
-  return NextResponse.json({ section });
 }
 
 export async function DELETE(request: Request) {
@@ -92,12 +117,19 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const deleted = await deleteRuleSection(String(body.id));
+  try {
+    const body = await request.json();
+    const deleted = await deleteRuleSection(String(body.id));
 
-  if (!deleted) {
-    return NextResponse.json({ message: "Раздел не найден" }, { status: 404 });
+    if (!deleted) {
+      return NextResponse.json(
+        { message: "Раздел не найден" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return errorResponse(error, "Ошибка удаления раздела правил");
   }
-
-  return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
 import { toManagedAuthUser } from "@/lib/auth";
 import { findManagedRole } from "@/lib/roles-store";
@@ -18,18 +18,6 @@ type LegacyManagedUser = Partial<ManagedUser> & {
 };
 
 const filePath = path.join(process.cwd(), "src", "data", "users-db.json");
-
-async function ensureFile() {
-  const dir = path.dirname(filePath);
-
-  await fs.mkdir(dir, { recursive: true });
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(filePath, JSON.stringify([], null, 2), "utf-8");
-  }
-}
 
 function normalizeUsername(value: string) {
   return value.trim().toLowerCase();
@@ -55,12 +43,9 @@ function sortUsers(users: ManagedUser[]) {
 }
 
 async function saveUsers(users: ManagedUser[]) {
-  await ensureFile();
-
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(sortUsers(users), null, 2),
-    "utf-8"
+  await writeJsonStore(
+    { key: "users", filePath },
+    sortUsers(users)
   );
 }
 
@@ -75,10 +60,11 @@ async function validateRole(roleId: string) {
 }
 
 export async function getManagedUsers() {
-  await ensureFile();
-
-  const file = await fs.readFile(filePath, "utf-8");
-  const rawUsers = JSON.parse(file) as LegacyManagedUser[];
+  const rawUsers = await readJsonStore<LegacyManagedUser[]>({
+    key: "users",
+    filePath,
+    fallback: [],
+  });
 
   return sortUsers(
     (Array.isArray(rawUsers) ? rawUsers : []).map(normalizeUser)

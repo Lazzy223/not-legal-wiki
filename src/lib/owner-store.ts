@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 
 type OwnerAccount = {
   username: "owner";
@@ -20,43 +20,18 @@ const defaultAccount: OwnerAccount = {
   updatedAt: new Date().toISOString(),
 };
 
-async function ensureFile() {
-  const dir = path.dirname(filePath);
-
-  await fs.mkdir(dir, { recursive: true });
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(
-      filePath,
-      JSON.stringify(defaultAccount, null, 2),
-      "utf-8"
-    );
-  }
-}
-
 export async function getOwnerAccount(): Promise<OwnerAccount> {
-  await ensureFile();
+  const parsed = await readJsonStore<Partial<OwnerAccount>>({
+    key: "owner",
+    filePath,
+    fallback: defaultAccount,
+  });
 
-  try {
-    const raw = await fs.readFile(filePath, "utf-8");
-    const parsed = JSON.parse(raw) as Partial<OwnerAccount>;
-
-    return {
-      username: "owner",
-      password: String(parsed.password || defaultAccount.password),
-      updatedAt: String(parsed.updatedAt || defaultAccount.updatedAt),
-    };
-  } catch {
-    await fs.writeFile(
-      filePath,
-      JSON.stringify(defaultAccount, null, 2),
-      "utf-8"
-    );
-
-    return defaultAccount;
-  }
+  return {
+    username: "owner",
+    password: String(parsed.password || defaultAccount.password),
+    updatedAt: String(parsed.updatedAt || defaultAccount.updatedAt),
+  };
 }
 
 export async function validateOwnerCredentials(
@@ -93,10 +68,9 @@ export async function changeOwnerPassword(
     updatedAt: new Date().toISOString(),
   };
 
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(updatedAccount, null, 2),
-    "utf-8"
+  await writeJsonStore(
+    { key: "owner", filePath },
+    updatedAccount
   );
 
   return true;

@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
 
 export type ChangelogPost = {
@@ -25,18 +25,6 @@ type ChangelogPostInput = {
 
 const filePath = path.join(process.cwd(), "src", "data", "changelog-db.json");
 
-async function ensureFile() {
-  const dir = path.dirname(filePath);
-
-  await fs.mkdir(dir, { recursive: true });
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(filePath, "[]", "utf-8");
-  }
-}
-
 function cleanArray(value: unknown) {
   if (!Array.isArray(value)) {
     return [];
@@ -59,10 +47,11 @@ function normalizePost(post: Partial<ChangelogPost>): ChangelogPost {
 }
 
 export async function getChangelogPosts(): Promise<ChangelogPost[]> {
-  await ensureFile();
-
-  const file = await fs.readFile(filePath, "utf-8");
-  const rawPosts = JSON.parse(file) as Partial<ChangelogPost>[];
+  const rawPosts = await readJsonStore<Partial<ChangelogPost>[]>({
+    key: "changelog",
+    filePath,
+    fallback: [],
+  });
 
   const posts = rawPosts.map(normalizePost);
 
@@ -72,9 +61,7 @@ export async function getChangelogPosts(): Promise<ChangelogPost[]> {
 }
 
 async function savePosts(posts: ChangelogPost[]) {
-  await ensureFile();
-
-  await fs.writeFile(filePath, JSON.stringify(posts, null, 2), "utf-8");
+  await writeJsonStore({ key: "changelog", filePath }, posts);
 }
 
 export async function createChangelogPost(data: ChangelogPostInput) {

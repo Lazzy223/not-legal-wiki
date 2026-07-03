@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
 
 export type RuleBlock = {
@@ -39,9 +39,9 @@ function blocksToHtml(blocks?: RuleBlock[]) {
 
 async function loadInitialRules(): Promise<RuleSection[]> {
   try {
-    const module = await import("@/data/rules");
+    const rulesModule = await import("@/data/rules");
 
-    const staticRules = module.rulesSections || [];
+    const staticRules = rulesModule.rulesSections || [];
 
     return staticRules.map((section: Partial<RuleSection>, index: number) => ({
       id: String(section.id || randomUUID()),
@@ -59,24 +59,6 @@ async function loadInitialRules(): Promise<RuleSection[]> {
     }));
   } catch {
     return [];
-  }
-}
-
-async function ensureFile() {
-  const dir = path.dirname(filePath);
-
-  await fs.mkdir(dir, { recursive: true });
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    const initialRules = await loadInitialRules();
-
-    await fs.writeFile(
-      filePath,
-      JSON.stringify(initialRules, null, 2),
-      "utf-8"
-    );
   }
 }
 
@@ -117,21 +99,21 @@ function sortSections(sections: RuleSection[]) {
 }
 
 export async function getRuleSections(): Promise<RuleSection[]> {
-  await ensureFile();
+  const rawSections = await readJsonStore<Partial<RuleSection>[]>({
+    key: "rules",
+    filePath,
+    fallback: loadInitialRules,
+  });
 
-  const file = await fs.readFile(filePath, "utf-8");
-  const rawSections = JSON.parse(file) as Partial<RuleSection>[];
-
-  return sortSections(rawSections.map(normalizeSection));
+  return sortSections(
+    (Array.isArray(rawSections) ? rawSections : []).map(normalizeSection)
+  );
 }
 
 async function saveRuleSections(sections: RuleSection[]) {
-  await ensureFile();
-
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(sortSections(sections), null, 2),
-    "utf-8"
+  await writeJsonStore(
+    { key: "rules", filePath },
+    sortSections(sections)
   );
 }
 

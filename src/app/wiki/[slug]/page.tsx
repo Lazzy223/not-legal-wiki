@@ -4,6 +4,8 @@ import WikiContent from "@/components/wiki-content";
 import { getArticleBySlug } from "@/lib/articles-store";
 import styles from "./article-page.module.css";
 
+export const dynamic = "force-dynamic";
+
 type ArticlePageProps = {
   params: Promise<{
     slug: string;

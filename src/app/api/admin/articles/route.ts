@@ -23,6 +23,17 @@ async function requireAdmin() {
   return user;
 }
 
+function errorResponse(error: unknown, fallback: string) {
+  console.error(fallback, error);
+
+  return NextResponse.json(
+    {
+      message: error instanceof Error ? error.message : fallback,
+    },
+    { status: 500 }
+  );
+}
+
 export async function GET() {
   const user = await requireAdmin();
 
@@ -30,9 +41,12 @@ export async function GET() {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const articles = await getArticles();
-
-  return NextResponse.json({ articles });
+  try {
+    const articles = await getArticles();
+    return NextResponse.json({ articles });
+  } catch (error) {
+    return errorResponse(error, "Не удалось загрузить статьи");
+  }
 }
 
 export async function POST(request: Request) {
@@ -42,19 +56,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const article = await createArticle({
-    slug: body.slug,
-    title: body.title,
-    category: body.category,
-    description: body.description,
-    content: body.content,
-    published: body.published,
-    sortOrder: Number(body.sortOrder || 999),
-  });
+    const article = await createArticle({
+      slug: body.slug,
+      title: body.title,
+      category: body.category,
+      description: body.description,
+      content: body.content,
+      published: body.published,
+      sortOrder: Number(body.sortOrder || 999),
+    });
 
-  return NextResponse.json({ article });
+    return NextResponse.json({ article });
+  } catch (error) {
+    return errorResponse(error, "Ошибка сохранения статьи");
+  }
 }
 
 export async function PUT(request: Request) {
@@ -64,23 +82,30 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const article = await updateArticle(String(body.id), {
-    slug: body.slug,
-    title: body.title,
-    category: body.category,
-    description: body.description,
-    content: body.content,
-    published: body.published,
-    sortOrder: Number(body.sortOrder || 999),
-  });
+    const article = await updateArticle(String(body.id), {
+      slug: body.slug,
+      title: body.title,
+      category: body.category,
+      description: body.description,
+      content: body.content,
+      published: body.published,
+      sortOrder: Number(body.sortOrder || 999),
+    });
 
-  if (!article) {
-    return NextResponse.json({ message: "Статья не найдена" }, { status: 404 });
+    if (!article) {
+      return NextResponse.json(
+        { message: "Статья не найдена" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ article });
+  } catch (error) {
+    return errorResponse(error, "Ошибка обновления статьи");
   }
-
-  return NextResponse.json({ article });
 }
 
 export async function DELETE(request: Request) {
@@ -90,12 +115,19 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const deleted = await deleteArticle(String(body.id));
+  try {
+    const body = await request.json();
+    const deleted = await deleteArticle(String(body.id));
 
-  if (!deleted) {
-    return NextResponse.json({ message: "Статья не найдена" }, { status: 404 });
+    if (!deleted) {
+      return NextResponse.json(
+        { message: "Статья не найдена" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return errorResponse(error, "Ошибка удаления статьи");
   }
-
-  return NextResponse.json({ ok: true });
 }

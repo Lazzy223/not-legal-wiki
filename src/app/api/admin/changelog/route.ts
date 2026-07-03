@@ -23,6 +23,17 @@ async function requireAdmin() {
   return user;
 }
 
+function errorResponse(error: unknown, fallback: string) {
+  console.error(fallback, error);
+
+  return NextResponse.json(
+    {
+      message: error instanceof Error ? error.message : fallback,
+    },
+    { status: 500 }
+  );
+}
+
 export async function GET() {
   const user = await requireAdmin();
 
@@ -30,9 +41,12 @@ export async function GET() {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const posts = await getChangelogPosts();
-
-  return NextResponse.json({ posts });
+  try {
+    const posts = await getChangelogPosts();
+    return NextResponse.json({ posts });
+  } catch (error) {
+    return errorResponse(error, "Не удалось загрузить публикации");
+  }
 }
 
 export async function POST(request: Request) {
@@ -42,18 +56,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const post = await createChangelogPost({
-    title: body.title,
-    publishedAt: body.publishedAt,
-    updates: body.updates,
-    fixes: body.fixes,
-    updatesHtml: body.updatesHtml,
-    fixesHtml: body.fixesHtml,
-  });
+    const post = await createChangelogPost({
+      title: body.title,
+      description: body.description,
+      publishedAt: body.publishedAt,
+      updates: body.updates,
+      fixes: body.fixes,
+      updatesHtml: body.updatesHtml,
+      fixesHtml: body.fixesHtml,
+    });
 
-  return NextResponse.json({ post });
+    return NextResponse.json({ post });
+  } catch (error) {
+    return errorResponse(error, "Ошибка сохранения публикации");
+  }
 }
 
 export async function PUT(request: Request) {
@@ -63,22 +82,30 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  const post = await updateChangelogPost(String(body.id), {
-    title: body.title,
-    publishedAt: body.publishedAt,
-    updates: body.updates,
-    fixes: body.fixes,
-    updatesHtml: body.updatesHtml,
-    fixesHtml: body.fixesHtml,
-  });
+    const post = await updateChangelogPost(String(body.id), {
+      title: body.title,
+      description: body.description,
+      publishedAt: body.publishedAt,
+      updates: body.updates,
+      fixes: body.fixes,
+      updatesHtml: body.updatesHtml,
+      fixesHtml: body.fixesHtml,
+    });
 
-  if (!post) {
-    return NextResponse.json({ message: "Пост не найден" }, { status: 404 });
+    if (!post) {
+      return NextResponse.json(
+        { message: "Пост не найден" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ post });
+  } catch (error) {
+    return errorResponse(error, "Ошибка обновления публикации");
   }
-
-  return NextResponse.json({ post });
 }
 
 export async function DELETE(request: Request) {
@@ -88,12 +115,19 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const deleted = await deleteChangelogPost(String(body.id));
+  try {
+    const body = await request.json();
+    const deleted = await deleteChangelogPost(String(body.id));
 
-  if (!deleted) {
-    return NextResponse.json({ message: "Пост не найден" }, { status: 404 });
+    if (!deleted) {
+      return NextResponse.json(
+        { message: "Пост не найден" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return errorResponse(error, "Ошибка удаления публикации");
   }
-
-  return NextResponse.json({ ok: true });
 }

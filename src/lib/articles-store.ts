@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
 
 export type WikiArticle = {
@@ -16,18 +16,6 @@ export type WikiArticle = {
 };
 
 const filePath = path.join(process.cwd(), "src", "data", "articles-db.json");
-
-async function ensureFile() {
-  const dir = path.dirname(filePath);
-
-  await fs.mkdir(dir, { recursive: true });
-
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(filePath, "[]", "utf-8");
-  }
-}
 
 function normalizeSlug(value: string) {
   return value
@@ -72,10 +60,11 @@ function sortArticles(articles: WikiArticle[]) {
 }
 
 export async function getArticles(): Promise<WikiArticle[]> {
-  await ensureFile();
-
-  const file = await fs.readFile(filePath, "utf-8");
-  const rawArticles = JSON.parse(file) as Partial<WikiArticle>[];
+  const rawArticles = await readJsonStore<Partial<WikiArticle>[]>({
+    key: "articles",
+    filePath,
+    fallback: [],
+  });
 
   const articles = rawArticles.map(normalizeArticle);
 
@@ -99,9 +88,7 @@ export async function getArticleBySlug(slug: string) {
 }
 
 async function saveArticles(articles: WikiArticle[]) {
-  await ensureFile();
-
-  await fs.writeFile(filePath, JSON.stringify(articles, null, 2), "utf-8");
+  await writeJsonStore({ key: "articles", filePath }, articles);
 }
 
 export async function createArticle(data: {
