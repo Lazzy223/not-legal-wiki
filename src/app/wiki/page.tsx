@@ -15,7 +15,7 @@ type LatestUpdate = {
 
 type WikiSearchApiItem = {
   id: string;
-  type: "patch-note";
+  type: "patch-note" | "article";
   title: string;
   description: string;
   href: string;
@@ -36,8 +36,12 @@ type SearchResultItem = {
 type PopularArticle = {
   id: string;
   title: string;
+  description: string;
+  category: string;
   href: string;
   views: number;
+  featured: boolean;
+  updatedAt: string;
 };
 
 function formatViews(value: number) {
@@ -351,17 +355,13 @@ export default function WikiPage() {
       };
     });
 
-    const patchItems: SearchResultItem[] = patchNotesSearch.map((item) => {
+    const dynamicItems: SearchResultItem[] = patchNotesSearch.map((item) => {
       const content = [
         item.title,
         item.description,
         item.category,
         item.searchText,
-        "Patch Note",
-        "патч ноут",
-        "Dev Blog",
-        "обновление",
-        "исправление",
+        item.type === "article" ? "Wiki статья гайд инструкция" : "Patch Note патч ноут Dev Blog обновление исправление",
       ]
         .filter(Boolean)
         .join(" ");
@@ -369,14 +369,14 @@ export default function WikiPage() {
       return {
         id: item.id,
         title: item.title,
-        type: "Dev Blog / Patch Note",
+        type: item.type === "article" ? `Wiki / ${item.category}` : "Dev Blog / Patch Note",
         href: item.href,
         content,
         snippet: getSnippet(content, search),
       };
     });
 
-    return [...wikiItems, ...patchItems]
+    return [...wikiItems, ...dynamicItems]
       .filter((item) => item.content.toLowerCase().includes(query))
       .slice(0, 12);
   }, [search, patchNotesSearch]);
@@ -580,6 +580,46 @@ export default function WikiPage() {
             ))}
           </div>
         </article>
+      </section>
+
+      <section className={styles.popularSection}>
+        <div className={styles.popularSectionHead}>
+          <div>
+            <span>ДИНАМИЧЕСКИЕ МАТЕРИАЛЫ</span>
+            <h2>Популярные статьи Wiki</h2>
+            <p>Материалы, созданные через админ-панель. Переход ведёт сразу к выбранному пункту статьи.</p>
+          </div>
+
+          <Link href="/admin/articles" className={styles.popularAdminLink}>
+            Управление статьями →
+          </Link>
+        </div>
+
+        <div className={styles.popularGrid}>
+          {popularArticles.length > 0 ? (
+            popularArticles.map((item, index) => (
+              <Link className={styles.popularCard} href={item.href} key={item.id}>
+                <div className={styles.popularCardTop}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <b>{item.featured ? "ЗАКРЕПЛЕНО" : item.category}</b>
+                </div>
+
+                <h3>{item.title}</h3>
+                <p>{item.description || "Открыть статью и перейти к основному пункту."}</p>
+
+                <div className={styles.popularCardMeta}>
+                  <span>◉ {formatViews(item.views)}</span>
+                  <span>{formatUpdateDate(item.updatedAt)} МСК</span>
+                  <strong>Открыть ↗</strong>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className={styles.popularEmpty}>
+              Опубликованные Wiki-статьи пока не найдены. Создайте первую страницу в /admin/articles.
+            </div>
+          )}
+        </div>
       </section>
 
       <footer className={styles.footer}>

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getChangelogPosts } from "@/lib/changelog-store";
+import {
+  getArticleHref,
+  getArticlePlainText,
+  getPublishedArticles,
+} from "@/lib/articles-store";
 
 export const dynamic = "force-dynamic";
 
@@ -29,25 +34,25 @@ function getDescription(post: ChangelogPostSearch, fallback = "") {
 }
 
 export async function GET() {
-  const posts = await getChangelogPosts();
+  const [posts, articles] = await Promise.all([
+    getChangelogPosts(),
+    getPublishedArticles(),
+  ]);
 
-  const items = posts.map((post) => {
+  const changelogItems = posts.map((post) => {
     const typedPost = post as typeof post & ChangelogPostSearch;
-
     const updatesText = [
       ...(post.updates || []),
       stripHtml(post.updatesHtml),
     ]
       .filter(Boolean)
       .join(" ");
-
     const fixesText = [
       ...(post.fixes || []),
       stripHtml(post.fixesHtml),
     ]
       .filter(Boolean)
       .join(" ");
-
     const fullText = [
       post.title,
       typedPost.description,
@@ -65,7 +70,7 @@ export async function GET() {
 
     return {
       id: `patch-${post.id}`,
-      type: "patch-note",
+      type: "patch-note" as const,
       title: post.title,
       description: getDescription(typedPost, updatesText || fixesText),
       href: `/wiki/changelog#${encodeURIComponent(post.id)}`,
@@ -75,7 +80,18 @@ export async function GET() {
     };
   });
 
+  const articleItems = articles.map((article) => ({
+    id: `article-${article.id}`,
+    type: "article" as const,
+    title: article.title,
+    description: article.description,
+    href: getArticleHref(article),
+    category: article.category,
+    searchText: getArticlePlainText(article),
+    date: article.updatedAt,
+  }));
+
   return NextResponse.json({
-    items,
+    items: [...articleItems, ...changelogItems],
   });
 }

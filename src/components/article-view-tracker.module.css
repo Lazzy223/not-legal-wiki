@@ -1,0 +1,11 @@
+.views {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.views i {
+  color: #ef4444;
+  font-style: normal;
+  font-size: 11px;
+}

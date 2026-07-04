@@ -1,6 +1,15 @@
 import path from "node:path";
-import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
 import { randomUUID } from "node:crypto";
+import { readJsonStore, writeJsonStore } from "@/lib/persistent-json-store";
+import {
+  createArticleBlock,
+  getArticlePrimaryAnchor,
+  getArticleSearchText,
+  normalizeArticleBlocks,
+  type ArticleBlock,
+} from "@/lib/article-types";
+
+export type { ArticleBlock } from "@/lib/article-types";
 
 export type WikiArticle = {
   id: string;
@@ -9,10 +18,34 @@ export type WikiArticle = {
   category: string;
   description: string;
   content: string;
+  blocks: ArticleBlock[];
+  coverImage: string;
+  coverPosition: string;
+  showToc: boolean;
+  featured: boolean;
+  featuredOrder: number;
+  featuredAnchor: string;
   published: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type WikiArticleInput = {
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  content?: string;
+  blocks?: ArticleBlock[];
+  coverImage?: string;
+  coverPosition?: string;
+  showToc?: boolean;
+  featured?: boolean;
+  featuredOrder?: number;
+  featuredAnchor?: string;
+  published: boolean;
+  sortOrder: number;
 };
 
 const filePath = path.join(process.cwd(), "src", "data", "articles-db.json");
@@ -22,12 +55,32 @@ function normalizeSlug(value: string) {
     .trim()
     .toLowerCase()
     .replaceAll(" ", "-")
-    .replace(/[^a-z0-9а-яё_-]/gi, "")
-    .replace(/-+/g, "-");
+    .replaceAll("ё", "е")
+    .replace(/[^a-z0-9а-я_-]/gi, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function legacyContentToBlocks(content: string) {
+  if (!content.trim()) {
+    return [createArticleBlock("heading"), createArticleBlock("text")];
+  }
+
+  return [
+    {
+      ...createArticleBlock("text"),
+      id: `legacy-${randomUUID()}`,
+      html: content,
+    },
+  ];
 }
 
 function normalizeArticle(article: Partial<WikiArticle>): WikiArticle {
   const now = new Date().toISOString();
+  const content = String(article.content || "").trim();
+  const normalizedBlocks = normalizeArticleBlocks(article.blocks);
+  const blocks =
+    normalizedBlocks.length > 0 ? normalizedBlocks : legacyContentToBlocks(content);
 
   return {
     id: String(article.id || randomUUID()),
@@ -35,7 +88,14 @@ function normalizeArticle(article: Partial<WikiArticle>): WikiArticle {
     title: String(article.title || "Без названия").trim(),
     category: String(article.category || "general").trim(),
     description: String(article.description || "").trim(),
-    content: String(article.content || "").trim(),
+    content,
+    blocks,
+    coverImage: String(article.coverImage || "").trim(),
+    coverPosition: String(article.coverPosition || "50% 50%").trim(),
+    showToc: article.showToc !== false,
+    featured: Boolean(article.featured),
+    featuredOrder: Number(article.featuredOrder || 999),
+    featuredAnchor: String(article.featuredAnchor || "").trim(),
     published: Boolean(article.published),
     sortOrder:
       typeof article.sortOrder === "number"
@@ -81,37 +141,79 @@ export async function getArticleBySlug(slug: string) {
   const articles = await getArticles();
 
   return (
-    articles.find(
-      (article) => article.slug === slug && article.published
-    ) || null
+    articles.find((article) => article.slug === slug && article.published) || null
   );
+}
+
+export function getArticleHref(article: WikiArticle) {
+  const anchor = getArticlePrimaryAnchor(
+    article.blocks,
+    article.featuredAnchor
+  );
+
+  return `/wiki/${article.slug}#${encodeURIComponent(anchor)}`;
+}
+
+export function getArticlePlainText(article: WikiArticle) {
+  return [
+    article.title,
+    article.category,
+    article.description,
+    getArticleSearchText(article.blocks),
+    article.content,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 async function saveArticles(articles: WikiArticle[]) {
   await writeJsonStore({ key: "articles", filePath }, articles);
 }
 
-export async function createArticle(data: {
-  slug: string;
-  title: string;
-  category: string;
-  description: string;
-  content: string;
-  published: boolean;
-  sortOrder: number;
-}) {
-  const articles = await getArticles();
-  const now = new Date().toISOString();
+function normalizeInput(data: WikiArticleInput) {
+  const normalizedBlocks = normalizeArticleBlocks(data.blocks);
+  const blocks =
+    normalizedBlocks.length > 0
+      ? normalizedBlocks
+      : legacyContentToBlocks(String(data.content || ""));
 
-  const article: WikiArticle = {
-    id: randomUUID(),
+  return {
     slug: normalizeSlug(data.slug || data.title),
     title: String(data.title || "Без названия").trim(),
     category: String(data.category || "general").trim(),
     description: String(data.description || "").trim(),
     content: String(data.content || "").trim(),
+    blocks,
+    coverImage: String(data.coverImage || "").trim(),
+    coverPosition: String(data.coverPosition || "50% 50%").trim(),
+    showToc: data.showToc !== false,
+    featured: Boolean(data.featured),
+    featuredOrder: Number(data.featuredOrder || 999),
+    featuredAnchor: String(data.featuredAnchor || "").trim(),
     published: Boolean(data.published),
     sortOrder: Number(data.sortOrder || 999),
+  };
+}
+
+export async function createArticle(data: WikiArticleInput) {
+  const articles = await getArticles();
+  const now = new Date().toISOString();
+  const normalized = normalizeInput(data);
+
+  const duplicateSlug = articles.some(
+    (article) => article.slug === normalized.slug
+  );
+
+  if (duplicateSlug) {
+    throw new Error("Статья с таким slug уже существует");
+  }
+
+  const article: WikiArticle = {
+    id: randomUUID(),
+    ...normalized,
     createdAt: now,
     updatedAt: now,
   };
@@ -123,18 +225,7 @@ export async function createArticle(data: {
   return article;
 }
 
-export async function updateArticle(
-  id: string,
-  data: {
-    slug: string;
-    title: string;
-    category: string;
-    description: string;
-    content: string;
-    published: boolean;
-    sortOrder: number;
-  }
-) {
+export async function updateArticle(id: string, data: WikiArticleInput) {
   const articles = await getArticles();
   const index = articles.findIndex((article) => article.id === id);
 
@@ -142,15 +233,18 @@ export async function updateArticle(
     return null;
   }
 
+  const normalized = normalizeInput(data);
+  const duplicateSlug = articles.some(
+    (article) => article.id !== id && article.slug === normalized.slug
+  );
+
+  if (duplicateSlug) {
+    throw new Error("Статья с таким slug уже существует");
+  }
+
   articles[index] = {
     ...articles[index],
-    slug: normalizeSlug(data.slug || data.title),
-    title: String(data.title || "Без названия").trim(),
-    category: String(data.category || "general").trim(),
-    description: String(data.description || "").trim(),
-    content: String(data.content || "").trim(),
-    published: Boolean(data.published),
-    sortOrder: Number(data.sortOrder || 999),
+    ...normalized,
     updatedAt: new Date().toISOString(),
   };
 
