@@ -1195,7 +1195,7 @@
   margin: 14px auto 0 !important;
 
   display: grid !important;
-  grid-template-columns: 1.1fr 0.85fr 0.72fr !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 14px !important;
 }
 
@@ -1669,5 +1669,323 @@
 
   .popularGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Главная Wiki занимает всё окно без внешней рамки layout. */
+.page {
+  width: calc(100% + 50px);
+  max-width: none;
+  min-height: 100vh;
+  margin: -25px;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Общая верхняя панель — в том же стиле, что и на главной странице. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  min-height: 74px;
+  height: auto;
+  padding: 0 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  background: rgba(8, 9, 11, 0.92);
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+}
+
+.logo {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  white-space: nowrap;
+  font-size: inherit;
+  letter-spacing: normal;
+}
+
+.logo span,
+.logo b {
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.7px;
+}
+
+.logo b {
+  color: #ff2f3f;
+  font-style: italic;
+}
+
+.headerCenter,
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.headerCenter {
+  justify-self: center;
+}
+
+.headerRight {
+  justify-self: end;
+}
+
+.headerCenter a,
+.headerCenter button,
+.headerRight > a {
+  min-height: 40px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #aeb0b6;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 780;
+  white-space: nowrap;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.headerCenter a:hover,
+.headerCenter button:hover,
+.headerRight > a:hover,
+.headerRight > .active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.headerStartButton {
+  margin-inline: 7px;
+  padding-inline: 18px !important;
+  color: #fff !important;
+  background: linear-gradient(135deg, #ff3141, #c70c1e) !important;
+  border: 1px solid rgba(255, 112, 123, 0.42) !important;
+  box-shadow: 0 9px 24px rgba(199, 12, 30, 0.2);
+}
+
+.headerStartButton:hover {
+  background: linear-gradient(135deg, #ff4655, #dc1024) !important;
+  transform: translateY(-1px);
+}
+
+.headerDonateButton {
+  margin-right: 3px;
+  color: #ff6976 !important;
+  background: rgba(255, 47, 63, 0.07) !important;
+  border: 1px solid rgba(255, 47, 63, 0.25) !important;
+}
+
+.headerDonateButton:hover {
+  color: #fff !important;
+  background: rgba(255, 47, 63, 0.15) !important;
+  border-color: rgba(255, 47, 63, 0.48) !important;
+}
+
+.headerRight .headerActions {
+  margin-left: 5px;
+  gap: 6px;
+}
+
+.headerRight .savedButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+  font-size: 19px;
+}
+
+.headerRight .adminAccessButton {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+/* Кнопки быстрых разделов теперь реально запускают поиск по Wiki. */
+.quickItem {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.popularSection {
+  scroll-margin-top: 92px;
+}
+
+/* Только тонкая нижняя часть футера, без большой секции с изображениями. */
+.footer {
+  width: min(1500px, calc(100% - 64px));
+  min-height: 64px;
+  margin: 28px auto 0;
+  padding: 18px 0 22px;
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(300px, 1fr);
+  align-items: center;
+  gap: 24px;
+  color: #5d6068;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.footerCopyright,
+.footerDisclaimer {
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.footerDisclaimer {
+  justify-self: end;
+  text-align: right;
+}
+
+.socials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.socials a {
+  min-height: 34px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #858891;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 750;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.socials a:hover {
+  color: #fff;
+  background: rgba(255, 47, 63, 0.07);
+  border-color: rgba(255, 47, 63, 0.3);
+}
+
+@media (max-width: 1280px) {
+  .header {
+    padding-inline: 26px;
+  }
+
+  .headerCenter a,
+  .headerCenter button,
+  .headerRight > a {
+    padding-inline: 9px;
+  }
+
+  .footer {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .footerDisclaimer {
+    justify-self: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 980px) {
+  .header {
+    position: sticky;
+    grid-template-columns: 1fr;
+    padding: 17px 22px;
+    gap: 12px;
+  }
+
+  .logo,
+  .headerCenter,
+  .headerRight {
+    justify-self: center;
+  }
+
+  .headerCenter,
+  .headerRight {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 15px 12px;
+  }
+
+  .logo span,
+  .logo b {
+    font-size: 21px;
+  }
+
+  .headerCenter a,
+  .headerCenter button,
+  .headerRight > a,
+  .headerRight .adminAccessButton {
+    min-height: 35px;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .headerStartButton {
+    margin-inline: 0;
+    padding-inline: 12px !important;
+  }
+
+  .headerRight .savedButton {
+    width: 35px;
+    height: 35px;
+  }
+
+  .footer {
+    width: calc(100% - 28px);
+  }
+
+  .socials {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* Финальная корректировка главной Wiki. */
+.page {
+  overflow-x: clip;
+}
+
+/* Верхняя панель остаётся на экране во время прокрутки. */
+.header {
+  position: sticky;
+  top: 0;
+}
+
+/* Три информационные панели имеют одинаковую ширину. */
+.infoGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1200px) {
+  .infoGrid {
+    grid-template-columns: 1fr !important;
   }
 }

@@ -85,13 +85,13 @@ const categories = [
     title: "Гос. организации",
     desc: "Информация о государственных структурах, их обязанностях и возможностях.",
     icon: "▥",
-    href: "/wiki/government",
+    query: "государственные организации",
   },
   {
     title: "Криминальные организации",
     desc: "Криминальные фракции, их иерархия, правила и особенности.",
     icon: "◉",
-    href: "/wiki/crime",
+    query: "криминальные организации",
   },
   {
     title: "Dev Blog",
@@ -109,13 +109,14 @@ const categories = [
     title: "Игровые зоны",
     desc: "Описание всех зон на карте, опасных территорий и важных локаций.",
     icon: "⌖",
-    href: "/wiki/zones",
+    query: "игровые зоны",
   },
   {
     title: "Обращение к администрации",
     desc: "Как сообщить о нарушении или задать вопрос администрации.",
     icon: "☎",
-    href: "/wiki/support",
+    href: "https://forum.notlegal-rp.ru/",
+    external: true,
   },
 ];
 
@@ -179,11 +180,11 @@ const articles = [
 ];
 
 const quickSections = [
-  "Команды сервера",
-  "Лицензии и документы",
-  "Транспорт",
-  "Недвижимость",
-  "Ивенты и мероприятия",
+  { title: "Команды сервера", query: "команды сервера" },
+  { title: "Лицензии и документы", query: "лицензии и документы" },
+  { title: "Транспорт", query: "транспорт" },
+  { title: "Недвижимость", query: "недвижимость" },
+  { title: "Ивенты и мероприятия", query: "ивенты и мероприятия" },
 ];
 
 function getSnippet(text: string, query: string) {
@@ -249,6 +250,18 @@ export default function WikiPage() {
   const [popularArticles, setPopularArticles] = useState<PopularArticle[]>([]);
   const [latestUpdates, setLatestUpdates] = useState<LatestUpdate[]>([]);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  function openWikiSearch(query: string) {
+    setSearch(query);
+
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  }
 
   useEffect(() => {
     async function loadLatestUpdates() {
@@ -386,27 +399,33 @@ export default function WikiPage() {
       <StartGuideModal />
 
       <header className={styles.header}>
-        <Link href="/" className={styles.logo}>
+        <Link href="/" className={styles.logo} aria-label="Not Legal RP">
           <span>NOT LEGAL</span>
           <b>RP</b>
         </Link>
 
-        <nav className={styles.nav}>
-          <button type="button">Форум</button>
-
-          <button type="button" className={styles.donateButton}>
-            Пополнить
+        <nav className={styles.headerCenter} aria-label="Навигация по проекту">
+          <Link href="/#about">О проекте</Link>
+          <button
+            type="button"
+            className={styles.headerStartButton}
+            data-start-guide-trigger
+          >
+            Начать играть
           </button>
+          <Link href="/#community">Соцсети</Link>
+        </nav>
 
+        <div className={styles.headerRight} aria-label="Разделы проекта">
+          <Link href="/donate" className={styles.headerDonateButton}>
+            Пополнить
+          </Link>
+          <Link href="/wiki/rules">Правила</Link>
           <Link href="/wiki" className={styles.active}>
             Wiki
           </Link>
-
-          <Link href="/wiki/changelog">Dev Blog</Link>
-          <Link href="/wiki/rules">Правила</Link>
-        </nav>
-
-        <WikiTopActions />
+          <WikiTopActions />
+        </div>
       </header>
 
       <section className={styles.searchSection}>
@@ -491,6 +510,47 @@ export default function WikiPage() {
             );
           }
 
+          if ("query" in item && item.query) {
+            return (
+              <button
+                type="button"
+                className={styles.categoryCard}
+                onClick={() => openWikiSearch(item.query)}
+                key={item.title}
+              >
+                <div className={styles.categoryIcon}>{item.icon}</div>
+
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.desc}</p>
+                </div>
+
+                <strong>›</strong>
+              </button>
+            );
+          }
+
+          if ("external" in item && item.external) {
+            return (
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.categoryCard}
+                key={item.title}
+              >
+                <div className={styles.categoryIcon}>{item.icon}</div>
+
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.desc}</p>
+                </div>
+
+                <strong>›</strong>
+              </a>
+            );
+          }
+
           return (
             <Link
               href={item.href || "/wiki"}
@@ -514,12 +574,12 @@ export default function WikiPage() {
         <article className={styles.panel}>
           <div className={styles.panelHead}>
             <h2>Популярные статьи</h2>
-            <Link href="/wiki">Смотреть все ›</Link>
+            <a href="#dynamic-materials">Смотреть все ›</a>
           </div>
 
           <div className={styles.articleList}>
             {popularArticles.length > 0 ? (
-              popularArticles.map((item, index) => (
+              popularArticles.slice(0, 5).map((item, index) => (
                 <Link
                   href={item.href}
                   className={styles.articleItem}
@@ -572,17 +632,22 @@ export default function WikiPage() {
 
           <div className={styles.quickList}>
             {quickSections.map((item) => (
-              <Link href="/wiki" className={styles.quickItem} key={item}>
+              <button
+                type="button"
+                className={styles.quickItem}
+                onClick={() => openWikiSearch(item.query)}
+                key={item.title}
+              >
                 <span>▧</span>
-                <p>{item}</p>
+                <p>{item.title}</p>
                 <b>›</b>
-              </Link>
+              </button>
             ))}
           </div>
         </article>
       </section>
 
-      <section className={styles.popularSection}>
+      <section className={styles.popularSection} id="dynamic-materials">
         <div className={styles.popularSectionHead}>
           <div>
             <span>ДИНАМИЧЕСКИЕ МАТЕРИАЛЫ</span>
@@ -623,21 +688,26 @@ export default function WikiPage() {
       </section>
 
       <footer className={styles.footer}>
-        <div className={styles.footerMark}>NL</div>
+        <span className={styles.footerCopyright}>© 2026 Not Legal RP</span>
 
-        <p>© 2024 Not Legal RP. Все права защищены.</p>
+        <nav className={styles.socials} aria-label="Социальные сети Not Legal RP">
+          <a href="https://discord.com/invite/notlegal" target="_blank" rel="noreferrer">
+            Discord
+          </a>
+          <a href="https://www.youtube.com/@notlegal5rp" target="_blank" rel="noreferrer">
+            YouTube
+          </a>
+          <a href="https://vk.com/notlegal_rp" target="_blank" rel="noreferrer">
+            ВКонтакте
+          </a>
+          <a href="https://t.me/notlegalrp" target="_blank" rel="noreferrer">
+            Telegram
+          </a>
+        </nav>
 
-        <div className={styles.socials}>
-          <button type="button">Discord</button>
-          <button type="button">YouTube</button>
-          <button type="button">ВКонтакте</button>
-          <button type="button">Telegram</button>
-        </div>
-
-        <div className={styles.online}>
-          <span />
-          Онлайн: 523 / 1000
-        </div>
+        <span className={styles.footerDisclaimer}>
+          Не является аффилированным продуктом Rockstar Games.
+        </span>
       </footer>
     </main>
   );
