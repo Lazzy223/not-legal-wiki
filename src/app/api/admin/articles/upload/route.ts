@@ -42,6 +42,49 @@ function safeFileName(value: string) {
   return `${base || "image"}${extension || ".webp"}`;
 }
 
+function getStorageState() {
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim() || "";
+  const isVercel = Boolean(process.env.VERCEL);
+  const useBlob = isVercel || Boolean(blobToken);
+
+  if (useBlob) {
+    return {
+      ready: Boolean(blobToken),
+      storage: "vercel-blob" as const,
+      blobToken,
+      message: blobToken
+        ? "Vercel Blob подключён. Фото будут храниться постоянно и доступны после деплоя."
+        : "Vercel Blob не подключён: отсутствует BLOB_READ_WRITE_TOKEN.",
+    };
+  }
+
+  return {
+    ready: true,
+    storage: "local" as const,
+    blobToken: "",
+    message:
+      "Локальный режим: фото сохраняются в public/uploads/wiki. На Vercel требуется Blob Storage.",
+  };
+}
+
+export async function GET() {
+  const user = await requireAdmin();
+
+  if (!user) {
+    return NextResponse.json({ message: "Нет доступа" }, { status: 403 });
+  }
+
+  const storage = getStorageState();
+
+  return NextResponse.json({
+    ready: storage.ready,
+    storage: storage.storage,
+    message: storage.message,
+    maxFileSize: MAX_FILE_SIZE,
+    allowedTypes: Array.from(ALLOWED_TYPES),
+  });
+}
+
 export async function POST(request: Request) {
   const user = await requireAdmin();
 
@@ -56,6 +99,13 @@ export async function POST(request: Request) {
     if (!(file instanceof File)) {
       return NextResponse.json(
         { message: "Выберите изображение" },
+        { status: 400 }
+      );
+    }
+
+    if (file.size === 0) {
+      return NextResponse.json(
+        { message: "Выбранный файл пустой" },
         { status: 400 }
       );
     }
@@ -75,13 +125,14 @@ export async function POST(request: Request) {
     }
 
     const filename = `${Date.now()}-${safeFileName(file.name)}`;
+    const storage = getStorageState();
 
-    if (process.env.VERCEL) {
-      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    if (storage.storage === "vercel-blob") {
+      if (!storage.ready || !storage.blobToken) {
         return NextResponse.json(
           {
             message:
-              "Vercel Blob не подключён. Добавьте Blob Storage к проекту и выполните новый деплой.",
+              "Vercel Blob не подключён. Создайте публичное Blob-хранилище, добавьте BLOB_READ_WRITE_TOKEN для Production и выполните новый деплой.",
           },
           { status: 503 }
         );
@@ -90,11 +141,17 @@ export async function POST(request: Request) {
       const blob = await put(`wiki/${filename}`, file, {
         access: "public",
         addRandomSuffix: true,
+        token: storage.blobToken,
       });
+
+      if (!blob.url || !blob.pathname) {
+        throw new Error("Vercel Blob не вернул адрес загруженного файла");
+      }
 
       return NextResponse.json({
         url: blob.url,
         pathname: blob.pathname,
+        storage: storage.storage,
       });
     }
 
@@ -111,18 +168,19 @@ export async function POST(request: Request) {
     return NextResponse.json({
       url: `/uploads/wiki/${filename}`,
       pathname: `uploads/wiki/${filename}`,
+      storage: storage.storage,
     });
   } catch (error) {
     console.error("Article image upload failed", error);
 
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Не удалось загрузить изображение",
-      },
-      { status: 500 }
-    );
+    const rawMessage =
+      error instanceof Error ? error.message : "Не удалось загрузить изображение";
+    const message = /private|access/i.test(rawMessage)
+      ? "Для изображений статей нужно публичное Vercel Blob-хранилище. Проверьте тип доступа хранилища."
+      : /token|unauthorized|forbidden/i.test(rawMessage)
+        ? "Токен Vercel Blob недействителен или не подключён к текущему окружению."
+        : rawMessage;
+
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

@@ -162,7 +162,7 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
   function setFontSize(size: string) {
     if (!editor || !requireSelection()) return;
 
-    const chain = editor.chain().focus() as any;
+    const chain = editor.chain().focus();
 
     if (editor.isActive("textStyle", { fontSize: size })) {
       chain.unsetFontSize().run();
@@ -175,7 +175,7 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
   function setFontFamily(fontFamily: string) {
     if (!editor || !requireSelection()) return;
 
-    const chain = editor.chain().focus() as any;
+    const chain = editor.chain().focus();
 
     if (editor.isActive("textStyle", { fontFamily })) {
       chain.unsetFontFamily().run();
@@ -183,6 +183,39 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
     }
 
     chain.setFontFamily(fontFamily).run();
+  }
+
+  function setTextColor(color: string) {
+    if (!editor || !requireSelection()) return;
+
+    const chain = editor.chain().focus();
+
+    if (color === "reset") {
+      chain.unsetColor().run();
+      return;
+    }
+
+    chain.setColor(color).run();
+  }
+
+  function setTextBackground(color: string) {
+    if (!editor || !requireSelection()) return;
+
+    const chain = editor.chain().focus();
+
+    if (color === "reset") {
+      chain.unsetBackgroundColor().run();
+      return;
+    }
+
+    chain.setBackgroundColor(color).run();
+  }
+
+  function applyKeyStyle() {
+    if (!editor || !requireSelection()) return;
+
+    const chain = editor.chain().focus();
+    chain.setColor("#f4f4f5").setBackgroundColor("#4a171b").run();
   }
 
   function clearFormatting() {
@@ -305,6 +338,49 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
           <option value="Consolas">Consolas</option>
         </select>
 
+        <select
+          disabled={!hasSelection}
+          defaultValue=""
+          onChange={(event) => {
+            if (!event.target.value) return;
+            setTextColor(event.target.value);
+            event.target.value = "";
+          }}
+        >
+          <option value="">Цвет текста</option>
+          <option value="reset">Обычный</option>
+          <option value="#f4f4f5">Белый</option>
+          <option value="#ef4444">Красный</option>
+          <option value="#f97316">Оранжевый</option>
+          <option value="#facc15">Жёлтый</option>
+          <option value="#22c55e">Зелёный</option>
+          <option value="#60a5fa">Синий</option>
+          <option value="#a1a1aa">Серый</option>
+        </select>
+
+        <select
+          disabled={!hasSelection}
+          defaultValue=""
+          onChange={(event) => {
+            if (!event.target.value) return;
+            setTextBackground(event.target.value);
+            event.target.value = "";
+          }}
+        >
+          <option value="">Фон текста</option>
+          <option value="reset">Без фона</option>
+          <option value="#4a171b">Красный</option>
+          <option value="#4a2b12">Оранжевый</option>
+          <option value="#443a12">Жёлтый</option>
+          <option value="#123823">Зелёный</option>
+          <option value="#172f4a">Синий</option>
+          <option value="#303036">Серый</option>
+        </select>
+
+        <button type="button" disabled={!hasSelection} onClick={applyKeyStyle}>
+          Клавиша
+        </button>
+
         <button type="button" disabled={!hasSelection} onClick={clearFormatting}>
           Убрать стиль
         </button>
@@ -313,8 +389,7 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
       <EditorContent editor={editor} className={styles.editor} />
 
       <div className={styles.help}>
-        Пиши обычный текст. Выдели нужный кусок и нажми кнопку. “• Список” —
-        список с точками, “1. Список” — нумерованный список.
+        Выдели текст и выбери цвет или фон. Кнопка «Клавиша» создаёт компактное выделение как у ESC. “• Список” — список с точками, “1. Список” — нумерованный.
       </div>
     </div>
   );

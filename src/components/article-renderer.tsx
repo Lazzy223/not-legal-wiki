@@ -124,35 +124,117 @@ export default function ArticleRenderer({
           );
         }
 
+        if (block.type === "table") {
+          const headers = block.tableHeaders?.length
+            ? block.tableHeaders
+            : ["Колонка 1"];
+          const rows = block.tableRows || [];
+
+          return (
+            <div className={wrapperClass} key={block.id} style={blockStyle(block)}>
+              <div className={styles.tableShell}>
+                {block.tableCaption && (
+                  <div className={styles.tableCaption}>{block.tableCaption}</div>
+                )}
+
+                <div className={styles.tableScroller}>
+                  <table
+                    className={classNames(
+                      styles.articleTable,
+                      styles[`table_${block.tableStyle || "default"}`],
+                      block.tableCompact && styles.tableCompact,
+                      block.tableFirstColumnStrong && styles.tableFirstColumnStrong
+                    )}
+                  >
+                    <thead>
+                      <tr>
+                        {headers.map((header, index) => (
+                          <th key={`${block.id}-header-${index}`} scope="col">
+                            {header || `Колонка ${index + 1}`}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length > 0 ? (
+                        rows.map((row, rowIndex) => (
+                          <tr key={`${block.id}-row-${rowIndex}`}>
+                            {headers.map((_, cellIndex) => (
+                              <td key={`${block.id}-cell-${rowIndex}-${cellIndex}`}>
+                                {row[cellIndex] || "—"}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td className={styles.tableEmpty} colSpan={headers.length}>
+                            Строки таблицы пока не добавлены.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         if (block.type === "image") {
+          const imageWidth = Math.min(100, Math.max(20, block.imageWidth || 80));
+          const frameAlignment: CSSProperties =
+            block.align === "right"
+              ? { marginLeft: "auto", marginRight: 0 }
+              : block.align === "center"
+                ? { marginLeft: "auto", marginRight: "auto" }
+                : { marginLeft: 0, marginRight: "auto" };
+
           return (
             <figure className={wrapperClass} key={block.id} style={blockStyle(block)}>
-              {block.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  alt={block.imageAlt || block.caption || "Изображение статьи"}
-                  className={styles.image}
-                  loading="lazy"
-                  src={block.imageUrl}
-                  style={{
-                    height: `${block.imageHeight || 440}px`,
-                    objectFit: block.imageFit || "cover",
-                    objectPosition: block.imagePosition || "50% 50%",
-                  }}
-                />
-              ) : (
-                <div
-                  className={styles.imagePlaceholder}
-                  style={{ height: `${block.imageHeight || 440}px` }}
-                >
-                  <span>▧</span>
-                  Изображение не выбрано
-                </div>
-              )}
+              <div
+                className={styles.imageFrame}
+                style={{
+                  ...frameAlignment,
+                  width: `${imageWidth}%`,
+                }}
+              >
+                {block.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt={block.imageAlt || block.caption || "Изображение статьи"}
+                    className={styles.image}
+                    loading="lazy"
+                    src={block.imageUrl}
+                    style={
+                      (block.imageFit || "contain") === "contain"
+                        ? {
+                            height: "auto",
+                            maxHeight: `${block.imageHeight || 720}px`,
+                            objectFit: "contain",
+                            objectPosition: block.imagePosition || "50% 50%",
+                          }
+                        : {
+                            height: `${block.imageHeight || 360}px`,
+                            objectFit: "cover",
+                            objectPosition: block.imagePosition || "50% 50%",
+                          }
+                    }
+                  />
+                ) : (
+                  <div
+                    className={styles.imagePlaceholder}
+                    style={{ height: `${block.imageHeight || 360}px` }}
+                  >
+                    <span>▧</span>
+                    Изображение не выбрано
+                  </div>
+                )}
 
-              {block.caption && (
-                <figcaption className={styles.caption}>{block.caption}</figcaption>
-              )}
+                {block.caption && (
+                  <figcaption className={styles.caption}>{block.caption}</figcaption>
+                )}
+              </div>
             </figure>
           );
         }

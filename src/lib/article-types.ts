@@ -3,6 +3,7 @@ export type ArticleBlockType =
   | "text"
   | "image"
   | "columns"
+  | "table"
   | "quote"
   | "callout"
   | "divider"
@@ -12,6 +13,7 @@ export type ArticleBlockWidth = "narrow" | "normal" | "wide" | "full";
 export type ArticleBlockAlign = "left" | "center" | "right";
 export type ArticleBlockSurface = "none" | "panel" | "accent";
 export type ArticleCalloutTone = "info" | "success" | "warning" | "danger";
+export type ArticleTableStyle = "default" | "striped" | "minimal";
 
 export type ArticleBlock = {
   id: string;
@@ -30,8 +32,15 @@ export type ArticleBlock = {
   imageAlt?: string;
   caption?: string;
   imageHeight?: number;
+  imageWidth?: number;
   imageFit?: "cover" | "contain";
   imagePosition?: string;
+  tableCaption?: string;
+  tableHeaders?: string[];
+  tableRows?: string[][];
+  tableStyle?: ArticleTableStyle;
+  tableCompact?: boolean;
+  tableFirstColumnStrong?: boolean;
   quoteAuthor?: string;
   tone?: ArticleCalloutTone;
   dividerStyle?: "solid" | "dashed" | "glow";
@@ -56,11 +65,17 @@ const surfaceValues = new Set<ArticleBlockSurface>([
   "panel",
   "accent",
 ]);
+const tableStyleValues = new Set<ArticleTableStyle>([
+  "default",
+  "striped",
+  "minimal",
+]);
 const blockTypes = new Set<ArticleBlockType>([
   "heading",
   "text",
   "image",
   "columns",
+  "table",
   "quote",
   "callout",
   "divider",
@@ -98,6 +113,26 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
   return Math.min(max, Math.max(min, Math.round(parsed)));
 }
 
+function normalizeTableHeaders(value: unknown, fallback: string[]) {
+  const headers = Array.isArray(value)
+    ? value.map((item) => String(item ?? "").slice(0, 180)).slice(0, 12)
+    : fallback;
+
+  return headers.length > 0 ? headers : ["Колонка 1"];
+}
+
+function normalizeTableRows(value: unknown, columnCount: number, fallback: string[][]) {
+  const source = Array.isArray(value) ? value : fallback;
+
+  return source.slice(0, 250).map((row) => {
+    const cells = Array.isArray(row) ? row : [];
+
+    return Array.from({ length: columnCount }, (_, index) =>
+      String(cells[index] ?? "").slice(0, 4000)
+    );
+  });
+}
+
 export function createArticleBlock(type: ArticleBlockType): ArticleBlock {
   const base: ArticleBlock = {
     id: createId(),
@@ -131,8 +166,9 @@ export function createArticleBlock(type: ArticleBlockType): ArticleBlock {
         imageUrl: "",
         imageAlt: "",
         caption: "",
-        imageHeight: 440,
-        imageFit: "cover",
+        imageHeight: 720,
+        imageWidth: 80,
+        imageFit: "contain",
         imagePosition: "50% 50%",
       };
     case "columns":
@@ -142,6 +178,20 @@ export function createArticleBlock(type: ArticleBlockType): ArticleBlock {
         surface: "panel",
         html: "<h3>Левая колонка</h3><p>Основная информация.</p>",
         secondaryHtml: "<h3>Правая колонка</h3><p>Дополнительная информация.</p>",
+      };
+    case "table":
+      return {
+        ...base,
+        width: "wide",
+        tableCaption: "",
+        tableHeaders: ["Название", "Цена", "Описание"],
+        tableRows: [
+          ["Новый элемент", "0$", "Описание элемента"],
+          ["Новый элемент", "0$", "Описание элемента"],
+        ],
+        tableStyle: "default",
+        tableCompact: false,
+        tableFirstColumnStrong: false,
       };
     case "quote":
       return {
@@ -184,6 +234,13 @@ export function normalizeArticleBlock(
     ? (value.type as ArticleBlockType)
     : "text";
   const fallback = createArticleBlock(type);
+  const fallbackHeaders = fallback.tableHeaders || ["Колонка 1"];
+  const tableHeaders = normalizeTableHeaders(value.tableHeaders, fallbackHeaders);
+  const tableRows = normalizeTableRows(
+    value.tableRows,
+    tableHeaders.length,
+    fallback.tableRows || []
+  );
 
   return {
     ...fallback,
@@ -202,8 +259,17 @@ export function normalizeArticleBlock(
     spaceTop: clampNumber(value.spaceTop, fallback.spaceTop, 0, 240),
     spaceBottom: clampNumber(value.spaceBottom, fallback.spaceBottom, 0, 240),
     level: value.level === 3 ? 3 : 2,
-    imageHeight: clampNumber(value.imageHeight, 440, 140, 1200),
+    imageHeight: clampNumber(value.imageHeight, 720, 100, 1800),
+    imageWidth: clampNumber(value.imageWidth, fallback.imageWidth || 80, 20, 100),
     spacerHeight: clampNumber(value.spacerHeight, 48, 8, 320),
+    tableCaption: String(value.tableCaption || "").slice(0, 300),
+    tableHeaders,
+    tableRows,
+    tableStyle: tableStyleValues.has(value.tableStyle as ArticleTableStyle)
+      ? (value.tableStyle as ArticleTableStyle)
+      : "default",
+    tableCompact: Boolean(value.tableCompact),
+    tableFirstColumnStrong: Boolean(value.tableFirstColumnStrong),
   };
 }
 
@@ -351,6 +417,9 @@ export function getArticleSearchText(blocks: ArticleBlock[]) {
         block.secondaryHtml,
         block.imageAlt,
         block.caption,
+        block.tableCaption,
+        ...(block.tableHeaders || []),
+        ...(block.tableRows || []).flat(),
         block.quoteAuthor,
       ]
         .filter(Boolean)
