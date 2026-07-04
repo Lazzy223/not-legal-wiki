@@ -44,23 +44,37 @@ function safeFileName(value: string) {
 
 function getStorageState() {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim() || "";
+  const blobStoreId = process.env.BLOB_STORE_ID?.trim() || "";
   const isVercel = Boolean(process.env.VERCEL);
-  const useBlob = isVercel || Boolean(blobToken);
+  const hasConnectedStore = Boolean(blobStoreId);
+  const hasStaticToken = Boolean(blobToken);
+  const useBlob = isVercel || hasConnectedStore || hasStaticToken;
 
   if (useBlob) {
+    const authMode = hasConnectedStore
+      ? ("oidc" as const)
+      : hasStaticToken
+        ? ("token" as const)
+        : ("none" as const);
+
     return {
-      ready: Boolean(blobToken),
+      ready: authMode !== "none",
       storage: "vercel-blob" as const,
+      authMode,
       blobToken,
-      message: blobToken
-        ? "Vercel Blob подключён. Фото будут храниться постоянно и доступны после деплоя."
-        : "Vercel Blob не подключён: отсутствует BLOB_READ_WRITE_TOKEN.",
+      message:
+        authMode === "oidc"
+          ? "Vercel Blob подключён к проекту. Фото будут храниться постоянно и доступны после деплоя."
+          : authMode === "token"
+            ? "Vercel Blob подключён через BLOB_READ_WRITE_TOKEN. Фото будут храниться постоянно и доступны после деплоя."
+            : "Vercel Blob не подключён к Production. Подключите Blob-хранилище к проекту и выполните новый деплой.",
     };
   }
 
   return {
     ready: true,
     storage: "local" as const,
+    authMode: "local" as const,
     blobToken: "",
     message:
       "Локальный режим: фото сохраняются в public/uploads/wiki. На Vercel требуется Blob Storage.",
@@ -79,6 +93,7 @@ export async function GET() {
   return NextResponse.json({
     ready: storage.ready,
     storage: storage.storage,
+    authMode: storage.authMode,
     message: storage.message,
     maxFileSize: MAX_FILE_SIZE,
     allowedTypes: Array.from(ALLOWED_TYPES),
@@ -128,11 +143,11 @@ export async function POST(request: Request) {
     const storage = getStorageState();
 
     if (storage.storage === "vercel-blob") {
-      if (!storage.ready || !storage.blobToken) {
+      if (!storage.ready) {
         return NextResponse.json(
           {
             message:
-              "Vercel Blob не подключён. Создайте публичное Blob-хранилище, добавьте BLOB_READ_WRITE_TOKEN для Production и выполните новый деплой.",
+              "Vercel Blob не подключён к Production. Подключите публичное Blob-хранилище к проекту и выполните новый деплой.",
           },
           { status: 503 }
         );
@@ -141,7 +156,9 @@ export async function POST(request: Request) {
       const blob = await put(`wiki/${filename}`, file, {
         access: "public",
         addRandomSuffix: true,
-        token: storage.blobToken,
+        ...(storage.authMode === "token"
+          ? { token: storage.blobToken }
+          : {}),
       });
 
       if (!blob.url || !blob.pathname) {
