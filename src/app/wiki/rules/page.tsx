@@ -140,7 +140,7 @@ export default function RulesPage() {
 
         <nav className={styles.nav}>
           <Link href="/wiki">Wiki</Link>
-          <Link href="/wiki/changelog">Dev Blog</Link>
+          <Link href="/wiki/laws">Законка</Link>
           <Link href="/wiki/rules" className={styles.activeNav}>
             Правила
           </Link>

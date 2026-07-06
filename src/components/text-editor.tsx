@@ -11,6 +11,7 @@ import styles from "./text-editor.module.css";
 type TextEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  mode?: "default" | "legal";
 };
 
 function normalizeContent(value: string) {
@@ -32,7 +33,11 @@ function normalizeContent(value: string) {
     .join("");
 }
 
-export default function TextEditor({ value, onChange }: TextEditorProps) {
+export default function TextEditor({
+  value,
+  onChange,
+  mode = "default",
+}: TextEditorProps) {
   const lastValueRef = useRef("");
   const [hasSelection, setHasSelection] = useState(false);
 
@@ -40,7 +45,7 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [2, 3],
+          levels: [2, 3, 4],
         },
       }),
 
@@ -224,6 +229,21 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
     editor.chain().focus().unsetAllMarks().clearNodes().run();
   }
 
+  function insertLegalTemplate(html: string) {
+    if (!editor) return;
+    editor.chain().focus().insertContent(html).run();
+  }
+
+  function toggleBlockquote() {
+    if (!editor) return;
+    editor.chain().focus().toggleBlockquote().run();
+  }
+
+  function insertDivider() {
+    if (!editor) return;
+    editor.chain().focus().setHorizontalRule().run();
+  }
+
   if (!editor) {
     return <div className={styles.loading}>Загрузка редактора...</div>;
   }
@@ -231,6 +251,65 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
   return (
     <div className={styles.editorBox}>
       <div className={styles.toolbar}>
+        {mode === "legal" && (
+          <div className={styles.legalTools}>
+            <span>Структура закона</span>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertLegalTemplate("<h2>РАЗДЕЛ I. НАЗВАНИЕ РАЗДЕЛА</h2>")
+              }
+            >
+              Раздел
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertLegalTemplate("<h3>ГЛАВА 1. НАЗВАНИЕ ГЛАВЫ</h3>")
+              }
+            >
+              Глава
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertLegalTemplate("<h4>Статья 1. Название статьи</h4>")
+              }
+            >
+              Статья
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertLegalTemplate("<p><strong>ч. 1</strong> Текст части.</p>")
+              }
+            >
+              Часть
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertLegalTemplate("<p><strong>а)</strong> Текст подпункта;</p>")
+              }
+            >
+              Подпункт
+            </button>
+
+            <button type="button" onClick={toggleBlockquote}>
+              Примечание
+            </button>
+
+            <button type="button" onClick={insertDivider}>
+              Разделитель
+            </button>
+          </div>
+        )}
+
         <button
           type="button"
           disabled={!hasSelection}
@@ -389,7 +468,9 @@ export default function TextEditor({ value, onChange }: TextEditorProps) {
       <EditorContent editor={editor} className={styles.editor} />
 
       <div className={styles.help}>
-        Выдели текст и выбери цвет или фон. Кнопка «Клавиша» создаёт компактное выделение как у ESC. “• Список” — список с точками, “1. Список” — нумерованный.
+        {mode === "legal"
+          ? "Кнопки «Раздел», «Глава», «Статья», «Часть» и «Подпункт» вставляют готовую юридическую структуру в позицию курсора. Остальные инструменты редактора продолжают работать без ограничений."
+          : "Выдели текст и выбери цвет или фон. Кнопка «Клавиша» создаёт компактное выделение как у ESC. “• Список” — список с точками, “1. Список” — нумерованный."}
       </div>
     </div>
   );

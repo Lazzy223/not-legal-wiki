@@ -26,6 +26,7 @@ const managementItems: NavigationItem[] = [
   { href: "/admin", label: "Обзор", icon: "⌂", exact: true },
   { href: "/admin/changelog", label: "Dev Blog", icon: "▤" },
   { href: "/admin/rules", label: "Правила", icon: "▣" },
+  { href: "/admin/laws", label: "Законка", icon: "§" },
   { href: "/admin/articles", label: "Статьи Wiki", icon: "◇" },
 ];
 
@@ -33,6 +34,7 @@ const viewItems: NavigationItem[] = [
   { href: "/wiki", label: "Wiki", icon: "◇", exact: true },
   { href: "/wiki/changelog", label: "Dev Blog", icon: "↗" },
   { href: "/wiki/rules", label: "Правила", icon: "⌑" },
+  { href: "/wiki/laws", label: "Законка", icon: "§" },
 ];
 
 function isItemActive(pathname: string, item: NavigationItem) {

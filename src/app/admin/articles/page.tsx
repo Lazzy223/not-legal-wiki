@@ -834,7 +834,7 @@ export default function AdminArticlesPage() {
                   </div>
                 </header>
 
-                {block.type !== "spacer" && block.type !== "divider" && (
+                {block.type !== "spacer" && (
                   <div className={styles.blockLayoutControls}>
                     <label>
                       <span>Ширина</span>
@@ -846,11 +846,13 @@ export default function AdminArticlesPage() {
                       </select>
                     </label>
                     <label>
-                      <span>Выравнивание</span>
+                      <span>Положение блока</span>
                       <select value={block.align} onChange={(event) => updateBlock(block.id, { align: event.target.value as ArticleBlock["align"] })}>
-                        <option value="left">Слева</option>
+                        <option value="left">К левому краю</option>
+                        <option value="leftInset">Слева с отступом</option>
                         <option value="center">По центру</option>
-                        <option value="right">Справа</option>
+                        <option value="rightInset">Справа с отступом</option>
+                        <option value="right">К правому краю</option>
                       </select>
                     </label>
                     <label>

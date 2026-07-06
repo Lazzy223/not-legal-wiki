@@ -10,7 +10,12 @@ export type ArticleBlockType =
   | "spacer";
 
 export type ArticleBlockWidth = "narrow" | "normal" | "wide" | "full";
-export type ArticleBlockAlign = "left" | "center" | "right";
+export type ArticleBlockAlign =
+  | "left"
+  | "leftInset"
+  | "center"
+  | "rightInset"
+  | "right";
 export type ArticleBlockSurface = "none" | "panel" | "accent";
 export type ArticleCalloutTone = "info" | "success" | "warning" | "danger";
 export type ArticleTableStyle = "default" | "striped" | "minimal";
@@ -59,7 +64,13 @@ const widthValues = new Set<ArticleBlockWidth>([
   "wide",
   "full",
 ]);
-const alignValues = new Set<ArticleBlockAlign>(["left", "center", "right"]);
+const alignValues = new Set<ArticleBlockAlign>([
+  "left",
+  "leftInset",
+  "center",
+  "rightInset",
+  "right",
+]);
 const surfaceValues = new Set<ArticleBlockSurface>([
   "none",
   "panel",

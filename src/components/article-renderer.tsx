@@ -184,7 +184,7 @@ export default function ArticleRenderer({
         if (block.type === "image") {
           const imageWidth = Math.min(100, Math.max(20, block.imageWidth || 80));
           const frameAlignment: CSSProperties =
-            block.align === "right"
+            block.align === "right" || block.align === "rightInset"
               ? { marginLeft: "auto", marginRight: 0 }
               : block.align === "center"
                 ? { marginLeft: "auto", marginRight: "auto" }

@@ -4,21 +4,57 @@
 }
 
 .block {
+  --block-max-width: 1020px;
+  --block-inset: clamp(28px, 6vw, 96px);
+  width: min(var(--block-max-width), 100%);
   min-width: 0;
-  margin-left: auto;
-  margin-right: auto;
+  box-sizing: border-box;
   color: #c5c5ca;
   scroll-margin-top: 88px;
 }
 
-.width_narrow { width: min(760px, 100%); }
-.width_normal { width: min(1020px, 100%); }
-.width_wide { width: min(1200px, 100%); }
-.width_full { width: 100%; }
+.width_narrow { --block-max-width: 760px; }
+.width_normal { --block-max-width: 1020px; }
+.width_wide { --block-max-width: 1200px; }
+.width_full { --block-max-width: 100%; }
 
-.align_left { text-align: left; }
-.align_center { text-align: center; }
-.align_right { text-align: right; }
+/*
+ * Пять универсальных положений работают для любого блока: текста,
+ * заголовка, изображения, таблицы, колонок, цитаты, врезки и разделителя.
+ * Варианты с отступом одновременно сдвигают блок и уменьшают его доступную
+ * ширину, поэтому он никогда не выходит за правую или левую границу статьи.
+ */
+.align_left {
+  margin-left: 0;
+  margin-right: auto;
+  text-align: left;
+}
+
+.align_leftInset {
+  width: min(var(--block-max-width), calc(100% - var(--block-inset)));
+  margin-left: var(--block-inset);
+  margin-right: auto;
+  text-align: left;
+}
+
+.align_center {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.align_rightInset {
+  width: min(var(--block-max-width), calc(100% - var(--block-inset)));
+  margin-left: auto;
+  margin-right: var(--block-inset);
+  text-align: right;
+}
+
+.align_right {
+  margin-left: auto;
+  margin-right: 0;
+  text-align: right;
+}
 
 .surface_panel,
 .surface_accent {
@@ -110,6 +146,12 @@
   font-weight: 720;
 }
 
+.richText :global(em),
+.richText :global(i) {
+  color: inherit;
+  font-style: italic;
+}
+
 .richText :global(span[style*="background-color"]) {
   padding: 2px 6px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -192,18 +234,9 @@
 }
 
 .type_image {
-  /*
-   * Изображение позиционируется относительно общей рабочей ширины статьи,
-   * а не относительно собственного узкого/широкого блока. Благодаря этому
-   * выравнивание влево совпадает с началом обычного контента, а вправо —
-   * с правой границей той же области.
-   */
-  width: min(1020px, 100%);
   display: block;
   margin-top: 0;
-  margin-right: auto;
   margin-bottom: 0;
-  margin-left: auto;
 }
 
 .imageFrame {
@@ -511,6 +544,10 @@
 }
 
 @media (max-width: 640px) {
+  .block {
+    --block-inset: 14px;
+  }
+
   .imageFrame {
     width: 100% !important;
   }
