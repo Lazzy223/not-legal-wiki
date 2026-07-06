@@ -711,30 +711,43 @@
   top: 50%;
   left: 0;
   z-index: 145;
-  min-height: 46px;
-  padding: 0 10px 0 8px;
+  width: 42px;
+  min-height: 54px;
+  padding: 5px 4px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 2px;
   color: #d7d7dc;
   background: rgba(10, 11, 14, 0.96);
   border: 1px solid rgba(239, 68, 68, 0.23);
   border-left: 0;
+  border-radius: 0 7px 7px 0;
   cursor: pointer;
   transform: translateY(-50%);
   backdrop-filter: blur(14px);
+}
+
+.catalogTrigger:hover {
+  width: 46px;
+  border-color: rgba(239, 68, 68, 0.48);
 }
 
 .catalogTrigger span {
   color: #ef5b5b;
   font-family: Georgia, serif;
   font-size: 18px;
+  line-height: 1;
 }
 
 .catalogTrigger b {
-  font-size: 9px;
-  letter-spacing: 0.65px;
-  text-transform: uppercase;
+  display: none;
+}
+
+.catalogTrigger kbd {
+  padding: 2px 4px;
+  font-size: 7px;
 }
 
 .workspace {

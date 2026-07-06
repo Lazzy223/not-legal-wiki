@@ -73,7 +73,7 @@
 
 .content strong,
 .content b {
-  color: #f4f4f5;
+  color: inherit;
   font-weight: 700;
 }
 
@@ -243,5 +243,36 @@
 
   .content :global([data-law-align="right-indent"]) {
     padding-right: 24px !important;
+  }
+}
+
+
+/* Семантические типы законов: нумерация и буквы остаются ровно такими, как ввёл редактор. */
+.content :global([data-law-kind="section"]),
+.content :global([data-law-kind="chapter"]) {
+  text-transform: uppercase;
+}
+
+.content :global([data-law-kind="part"]) {
+  margin-bottom: 10px;
+}
+
+.content :global([data-law-kind="subpoint"]) {
+  padding-left: 28px;
+}
+
+.content :global([data-law-kind="note"]) {
+  border-left-color: #ef4444;
+}
+
+.content :global([data-law-kind="divider"]) {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+@media (max-width: 720px) {
+  .content :global([data-law-kind="subpoint"]) {
+    padding-left: 18px;
   }
 }

@@ -1,16 +1,23 @@
 .editorBox {
-  overflow: hidden;
+  overflow: visible;
   background: rgba(7, 9, 16, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .toolbar {
+  position: sticky;
+  top: 10px;
+  z-index: 55;
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.055);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(17, 18, 22, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 0;
+  border-left: 0;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(16px);
 }
 
 .toolbar button,
@@ -97,8 +104,9 @@
   text-underline-offset: 4px;
 }
 
-.editor :global(.ProseMirror strong) {
-  color: #ffffff;
+.editor :global(.ProseMirror strong),
+.editor :global(.ProseMirror b) {
+  color: inherit;
   font-weight: 1000;
 }
 
@@ -265,5 +273,43 @@
 
   .editor :global(.ProseMirror [data-law-align="right-indent"]) {
     padding-right: 24px !important;
+  }
+}
+
+
+/* Юридическая структура меняет только тип и внешний вид блока. Текст не дописывается. */
+.editor :global(.ProseMirror [data-law-kind="section"]) {
+  text-transform: uppercase;
+}
+
+.editor :global(.ProseMirror [data-law-kind="chapter"]) {
+  text-transform: uppercase;
+}
+
+.editor :global(.ProseMirror [data-law-kind="part"]) {
+  margin-bottom: 10px;
+}
+
+.editor :global(.ProseMirror [data-law-kind="subpoint"]) {
+  padding-left: 28px;
+}
+
+.editor :global(.ProseMirror [data-law-kind="note"]) {
+  border-left-color: #ef4444;
+}
+
+.editor :global(.ProseMirror [data-law-kind="divider"]) {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+@media (max-width: 760px) {
+  .toolbar {
+    position: static;
+  }
+
+  .editor :global(.ProseMirror [data-law-kind="subpoint"]) {
+    padding-left: 18px;
   }
 }

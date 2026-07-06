@@ -26,6 +26,15 @@ type LegalBlockAlignment =
   | "right-indent"
   | "right";
 
+type LegalBlockKind =
+  | "section"
+  | "chapter"
+  | "article"
+  | "part"
+  | "subpoint"
+  | "note"
+  | "divider";
+
 const LegalBlockAlignmentExtension = Extension.create({
   name: "legalBlockAlignment",
 
@@ -40,6 +49,14 @@ const LegalBlockAlignmentExtension = Extension.create({
             renderHTML: (attributes) =>
               attributes.lawAlign
                 ? { "data-law-align": attributes.lawAlign }
+                : {},
+          },
+          lawKind: {
+            default: null,
+            parseHTML: (element) => element.getAttribute("data-law-kind"),
+            renderHTML: (attributes) =>
+              attributes.lawKind
+                ? { "data-law-kind": attributes.lawKind }
                 : {},
           },
         },
@@ -356,11 +373,6 @@ export default function TextEditor({
     editor.chain().focus().unsetAllMarks().clearNodes().run();
   }
 
-  function insertLegalTemplate(html: string) {
-    if (!editor) return;
-    editor.chain().focus().insertContent(html).run();
-  }
-
   function getSelectedLegalTextBlocks() {
     if (!editor) return [];
 
@@ -384,176 +396,106 @@ export default function TextEditor({
       }
     }
 
-    return [...positions].sort((first, second) => second - first);
+    return [...positions].sort((first, second) => first - second);
   }
 
-  function applyLegalStructureToSelection({
-    nodeType,
-    level,
-    prefix,
-    prefixPattern,
-  }: {
-    nodeType: "paragraph" | "heading";
-    level?: 2 | 3 | 4;
-    prefix?: string;
-    prefixPattern?: RegExp;
-  }) {
-    if (!editor) return false;
+  function setKindOnSelectedNodes(
+    nodeNames: string[],
+    kind: LegalBlockKind
+  ) {
+    if (!editor) return;
+
+    const { state, view } = editor;
+    const { from, to, $from, $to } = state.selection;
+    const positions = new Set<number>();
+
+    state.doc.nodesBetween(from, to, (node, position) => {
+      if (nodeNames.includes(node.type.name)) positions.add(position);
+    });
+
+    for (const resolved of [$from, $to]) {
+      for (let depth = resolved.depth; depth > 0; depth -= 1) {
+        const node = resolved.node(depth);
+        if (!nodeNames.includes(node.type.name)) continue;
+        positions.add(resolved.before(depth));
+        break;
+      }
+    }
+
+    const transaction = state.tr;
+
+    [...positions]
+      .sort((first, second) => first - second)
+      .forEach((position) => {
+        const node = transaction.doc.nodeAt(position);
+        if (!node || !nodeNames.includes(node.type.name)) return;
+
+        transaction.setNodeMarkup(position, undefined, {
+          ...node.attrs,
+          lawKind: kind,
+        });
+      });
+
+    if (transaction.docChanged) {
+      view.dispatch(transaction.scrollIntoView());
+      view.focus();
+    }
+  }
+
+  function applyLegalStructure(kind: LegalBlockKind) {
+    if (!editor) return;
+
+    restoreLastTextSelection();
+
+    if (kind === "note") {
+      editor.chain().focus().setParagraph().setBlockquote().run();
+      setKindOnSelectedNodes(["blockquote"], "note");
+      return;
+    }
 
     const positions = getSelectedLegalTextBlocks();
-    if (!positions.length) return false;
+    if (!positions.length) return;
 
     const { state, view } = editor;
     const transaction = state.tr;
-    const targetType = state.schema.nodes[nodeType];
-    const boldMark = state.schema.marks.bold?.create();
 
     for (const position of positions) {
       const node = transaction.doc.nodeAt(position);
       if (!node || !node.isTextblock) continue;
 
       const lawAlign = node.attrs.lawAlign || null;
-      const attributes =
-        nodeType === "heading"
-          ? { level: level || 2, lawAlign }
-          : { lawAlign };
 
-      if (node.type !== targetType || (level && node.attrs.level !== level)) {
-        transaction.setNodeMarkup(
-          position,
-          targetType,
-          attributes,
-          node.marks
-        );
-      }
-
-      const currentNode = transaction.doc.nodeAt(position);
-      if (!currentNode || !prefix) continue;
-
-      const plainText = currentNode.textContent.trimStart();
-      const existingPrefix = prefixPattern?.exec(plainText)?.[0];
-
-      if (existingPrefix) {
-        if (boldMark) {
-          const leadingWhitespace = currentNode.textContent.length - plainText.length;
-          const markFrom = position + 1 + leadingWhitespace;
-          transaction.addMark(
-            markFrom,
-            markFrom + existingPrefix.length,
-            boldMark
-          );
-        }
+      if (kind === "section" || kind === "chapter" || kind === "article") {
+        const level = kind === "section" ? 2 : kind === "chapter" ? 3 : 4;
+        transaction.setNodeMarkup(position, state.schema.nodes.heading, {
+          level,
+          lawAlign,
+          lawKind: kind,
+        });
         continue;
       }
 
-      const insertPosition = position + 1;
-      const prefixNode = state.schema.text(
-        prefix,
-        boldMark ? [boldMark] : undefined
-      );
+      if (kind === "part" || kind === "subpoint") {
+        transaction.setNodeMarkup(position, state.schema.nodes.paragraph, {
+          lawAlign,
+          lawKind: kind,
+        });
+        continue;
+      }
 
-      transaction.insert(insertPosition, prefixNode);
-      transaction.insertText(" ", insertPosition + prefix.length);
-    }
-
-    if (!transaction.docChanged) return false;
-
-    view.dispatch(transaction.scrollIntoView());
-    view.focus();
-    return true;
-  }
-
-  function applyLegalStructure(
-    type: "section" | "chapter" | "article" | "part" | "subpoint" | "note"
-  ) {
-    if (!editor) return;
-
-    const hasSelectedText = !editor.state.selection.empty;
-
-    if (!hasSelectedText) {
-      const templates = {
-        section: "<h2>РАЗДЕЛ I. НАЗВАНИЕ РАЗДЕЛА</h2>",
-        chapter: "<h3>ГЛАВА 1. НАЗВАНИЕ ГЛАВЫ</h3>",
-        article: "<h4>Статья 1. Название статьи</h4>",
-        part: "<p><strong>ч. 1</strong> Текст части.</p>",
-        subpoint: "<p><strong>а)</strong> Текст подпункта;</p>",
-        note: "<blockquote><strong>Примечание:</strong> Текст примечания.</blockquote>",
-      } as const;
-
-      insertLegalTemplate(templates[type]);
-      return;
-    }
-
-    if (type === "section") {
-      applyLegalStructureToSelection({
-        nodeType: "heading",
-        level: 2,
-        prefix: "РАЗДЕЛ I.",
-        prefixPattern: /^РАЗДЕЛ\s+[IVXLCDM\d]+(?:\.|\s)/i,
+      transaction.setNodeMarkup(position, undefined, {
+        ...node.attrs,
+        lawKind: "divider",
       });
-      return;
     }
 
-    if (type === "chapter") {
-      applyLegalStructureToSelection({
-        nodeType: "heading",
-        level: 3,
-        prefix: "ГЛАВА 1.",
-        prefixPattern: /^ГЛАВА\s+\d+(?:\.\d+)?(?:\.|\s)/i,
-      });
-      return;
+    if (transaction.docChanged) {
+      view.dispatch(transaction.scrollIntoView());
+      view.focus();
     }
 
-    if (type === "article") {
-      applyLegalStructureToSelection({
-        nodeType: "heading",
-        level: 4,
-        prefix: "Статья 1.",
-        prefixPattern: /^Статья\s+\d+(?:\.\d+)?(?:\.|\s)/i,
-      });
-      return;
-    }
-
-    if (type === "part") {
-      applyLegalStructureToSelection({
-        nodeType: "paragraph",
-        prefix: "ч. 1",
-        prefixPattern: /^ч\.\s*\d+(?:\.\d+)?/i,
-      });
-      return;
-    }
-
-    if (type === "subpoint") {
-      applyLegalStructureToSelection({
-        nodeType: "paragraph",
-        prefix: "а)",
-        prefixPattern: /^[а-яёa-z]\)/i,
-      });
-      return;
-    }
-
-    const changed = applyLegalStructureToSelection({
-      nodeType: "paragraph",
-      prefix: "Примечание:",
-      prefixPattern: /^(?:Примечание|Исключение)\s*:/i,
-    });
-
-    if (changed) {
-      editor.chain().focus().setBlockquote().run();
-    }
-  }
-
-  function insertDivider() {
-    if (!editor) return;
-
-    const insertionPosition = editor.state.selection.to;
-
-    editor
-      .chain()
-      .focus()
-      .setTextSelection(insertionPosition)
-      .setHorizontalRule()
-      .run();
+    const { from, to } = editor.state.selection;
+    if (from !== to) lastTextSelectionRef.current = { from, to };
   }
 
   if (!editor) {
@@ -614,7 +556,10 @@ export default function TextEditor({
                 Примечание
               </button>
 
-              <button type="button" onClick={insertDivider}>
+              <button
+                type="button"
+                onClick={() => applyLegalStructure("divider")}
+              >
                 Разделитель
               </button>
             </div>
@@ -806,7 +751,7 @@ export default function TextEditor({
 
       <div className={styles.help}>
         {mode === "legal"
-          ? "При выделенном тексте кнопки структуры сохраняют его и превращают в раздел, главу, статью, часть, подпункт или примечание. Без выделения вставляется готовая заготовка. «Разделитель» добавляется после выделенного текста. Пять кнопок положения применяются к текущему блоку или ко всем выделенным абзацам."
+          ? "Кнопки структуры ничего не дописывают и не меняют текст: они только назначают выделенным абзацам тип раздела, главы, статьи, части, подпункта, примечания или разделителя. Уже введённые номера и буквы сохраняются. Панель остаётся на экране при прокрутке редактора."
           : "Выдели текст и выбери цвет или фон. Кнопка «Клавиша» создаёт компактное выделение как у ESC. “• Список” — список с точками, “1. Список” — нумерованный."}
       </div>
     </div>
