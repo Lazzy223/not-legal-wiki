@@ -83,10 +83,26 @@ function isArticleTitle(value: string) {
   return /^Статья\s+\d+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
 }
 
+function mergeAdjacentLawLists(html: string) {
+  let normalized = html;
+  let previous = "";
+
+  while (normalized !== previous) {
+    previous = normalized;
+    normalized = normalized.replace(
+      /<(ol|ul)([^>]*)>([\s\S]*?)<\/\1>\s*<\1([^>]*)>([\s\S]*?)<\/\1>/gi,
+      (_full, tag: string, firstAttributes: string, firstItems: string, _secondAttributes: string, secondItems: string) =>
+        `<${tag}${firstAttributes}>${firstItems}${secondItems}</${tag}>`
+    );
+  }
+
+  return normalized;
+}
+
 export function normalizeLawStructureHtml(html: string) {
   if (!html.trim()) return html;
 
-  return html.replace(
+  const structured = html.replace(
     /<p([^>]*)>([\s\S]*?)<\/p>/gi,
     (full, rawAttributes: string, inner: string) => {
       const title = stripTags(inner);
@@ -113,6 +129,8 @@ export function normalizeLawStructureHtml(html: string) {
       return full;
     }
   );
+
+  return mergeAdjacentLawLists(structured);
 }
 
 function slugify(value: string, index: number) {
@@ -299,7 +317,8 @@ export function legalPlainTextToHtml(
     const line = rawLine.trim();
 
     if (!line) {
-      flushLists();
+      // Пустые строки внутри списка не должны начинать нумерацию заново.
+      // Список закрывается только при появлении заголовка или обычного текста.
       continue;
     }
 
