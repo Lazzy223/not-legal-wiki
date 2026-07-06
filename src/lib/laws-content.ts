@@ -127,6 +127,45 @@ function isArticleTitle(value: string) {
   return /^Статья\s+\d+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
 }
 
+function splitArticleHeading(value: string) {
+  const match = value.match(
+    /^\s*(Статья\s+\d+(?:\.\d+)?\.?)(?:\s+|$)(.*)$/i
+  );
+
+  if (!match) return null;
+
+  return {
+    prefix: match[1].trim(),
+    title: match[2].trim(),
+  };
+}
+
+function formatArticleHeadingInner(
+  value: string,
+  prefixColor = DEFAULT_LEGAL_IMPORT_OPTIONS.articleColor
+) {
+  if (/data-law-article-prefix=/i.test(value)) return value;
+
+  const plain = stripTags(value);
+  const parts = splitArticleHeading(plain);
+  if (!parts) return value;
+
+  const detectedColor = extractInlineColor(value, prefixColor);
+
+  return [
+    `<span data-law-article-prefix="true" style="color: ${escapeAttribute(
+      detectedColor
+    )}">${escapeHtml(parts.prefix)}</span>`,
+    parts.title
+      ? `<span data-law-article-title="true" style="color: #f4f4f5">${escapeHtml(
+          parts.title
+        )}</span>`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function mergeAdjacentLawLists(html: string) {
   let normalized = html;
   let previous = "";
@@ -167,7 +206,7 @@ export function normalizeLawStructureHtml(html: string) {
       if (isArticleTitle(title)) {
         attributes = ensureAttribute(attributes, "data-law-kind", "article");
         attributes = ensureAttribute(attributes, "data-law-align", "left");
-        return `<h4${attributes}>${inner}</h4>`;
+        return `<h4${attributes}>${formatArticleHeadingInner(inner)}</h4>`;
       }
 
       return full;
@@ -188,7 +227,21 @@ export function normalizeLawStructureHtml(html: string) {
     }
   );
 
-  return mergeAdjacentLawLists(normalizedChapters);
+  const normalizedArticles = normalizedChapters.replace(
+    /<h4([^>]*)>([\s\S]*?)<\/h4>/gi,
+    (full, rawAttributes: string, inner: string) => {
+      const title = stripTags(inner);
+      if (!isArticleTitle(title)) return full;
+
+      let attributes = rawAttributes || "";
+      attributes = ensureAttribute(attributes, "data-law-kind", "article");
+      attributes = ensureAttribute(attributes, "data-law-align", "left");
+
+      return `<h4${attributes}>${formatArticleHeadingInner(inner)}</h4>`;
+    }
+  );
+
+  return mergeAdjacentLawLists(normalizedArticles);
 }
 
 function slugify(value: string, index: number) {
@@ -417,8 +470,21 @@ export function legalPlainTextToHtml(
       flushLists();
       insideArticle = true;
       hasStructuredHeading = true;
+      const article = splitArticleHeading(line);
       html.push(
-        `<h4 data-law-kind="article" data-law-align="left">${coloredText(line, settings.articleColor)}</h4>`
+        `<h4 data-law-kind="article" data-law-align="left">${
+          article
+            ? `<span data-law-article-prefix="true" style="color: ${escapeAttribute(
+                settings.articleColor
+              )}">${escapeHtml(article.prefix)}</span>${
+                article.title
+                  ? ` <span data-law-article-title="true" style="color: #f4f4f5">${escapeHtml(
+                      article.title
+                    )}</span>`
+                  : ""
+              }`
+            : coloredText(line, settings.articleColor)
+        }</h4>`
       );
       continue;
     }

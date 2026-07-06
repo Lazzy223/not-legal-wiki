@@ -527,6 +527,37 @@ export default function TextEditor({
     );
   }
 
+  function applyArticleHeadingColors(
+    transaction: Transaction,
+    node: ProseMirrorNode,
+    position: number,
+    prefixColor: string
+  ) {
+    const textStyle = transaction.doc.type.schema.marks.textStyle;
+    if (!textStyle || node.content.size === 0) return;
+
+    const contentFrom = position + 1;
+    const contentTo = position + node.nodeSize - 1;
+
+    transaction.addMark(
+      contentFrom,
+      contentTo,
+      textStyle.create({ color: "#f4f4f5" })
+    );
+
+    const prefix = node.textContent.match(
+      /^\s*(Статья\s+\d+(?:\.\d+)?\.?)/i
+    );
+    if (!prefix) return;
+
+    const prefixStart = contentFrom + node.textContent.indexOf(prefix[1]);
+    transaction.addMark(
+      prefixStart,
+      prefixStart + prefix[1].length,
+      textStyle.create({ color: prefixColor })
+    );
+  }
+
   function applyPrefixColor(
     transaction: Transaction,
     node: ProseMirrorNode,
@@ -653,12 +684,19 @@ export default function TextEditor({
             position,
             legalChapterColor
           );
+        } else if (kind === "article") {
+          applyArticleHeadingColors(
+            transaction,
+            node,
+            position,
+            legalArticleColor
+          );
         } else {
           applyColorToNodeContent(
             transaction,
             node,
             position,
-            kind === "article" ? legalArticleColor : legalChapterColor
+            legalChapterColor
           );
         }
         continue;
@@ -734,12 +772,19 @@ export default function TextEditor({
             position,
             activeChapterColor
           );
+        } else if (isArticle) {
+          applyArticleHeadingColors(
+            transaction,
+            node,
+            position,
+            activeArticleColor
+          );
         } else {
           applyColorToNodeContent(
             transaction,
             node,
             position,
-            isArticle ? activeArticleColor : activeChapterColor
+            activeChapterColor
           );
         }
         return false;

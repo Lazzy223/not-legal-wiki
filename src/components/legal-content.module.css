@@ -314,3 +314,9 @@
 .content :global([data-law-chapter-title="true"]) {
   color: #f4f4f5 !important;
 }
+
+
+/* В заголовке статьи цвет применяется только к «Статья 4.», название остаётся белым. */
+.content :global([data-law-article-title="true"]) {
+  color: #f4f4f5 !important;
+}
