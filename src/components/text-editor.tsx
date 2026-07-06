@@ -1,12 +1,106 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import styles from "./text-editor.module.css";
+
+
+const LEGAL_ALIGNABLE_NODES = [
+  "paragraph",
+  "heading",
+  "blockquote",
+  "bulletList",
+  "orderedList",
+  "horizontalRule",
+];
+
+type LegalBlockAlignment =
+  | "left"
+  | "left-indent"
+  | "center"
+  | "right-indent"
+  | "right";
+
+const LegalBlockAlignmentExtension = Extension.create({
+  name: "legalBlockAlignment",
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: LEGAL_ALIGNABLE_NODES,
+        attributes: {
+          lawAlign: {
+            default: null,
+            parseHTML: (element) => element.getAttribute("data-law-align"),
+            renderHTML: (attributes) =>
+              attributes.lawAlign
+                ? { "data-law-align": attributes.lawAlign }
+                : {},
+          },
+        },
+      },
+    ];
+  },
+});
+
+function getCurrentLegalAlignment(editor: Editor): LegalBlockAlignment | null {
+  const { $from } = editor.state.selection;
+
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const node = $from.node(depth);
+    if (!LEGAL_ALIGNABLE_NODES.includes(node.type.name)) continue;
+    return (node.attrs.lawAlign as LegalBlockAlignment | null) || null;
+  }
+
+  return null;
+}
+
+function setLegalBlockAlignment(
+  editor: Editor,
+  alignment: LegalBlockAlignment
+) {
+  const { state, view } = editor;
+  const { from, to, $from, $to } = state.selection;
+  const positions = new Set<number>();
+
+  state.doc.nodesBetween(from, to, (node, position) => {
+    if (LEGAL_ALIGNABLE_NODES.includes(node.type.name)) {
+      positions.add(position);
+    }
+  });
+
+  for (const resolved of [$from, $to]) {
+    for (let depth = resolved.depth; depth > 0; depth -= 1) {
+      const node = resolved.node(depth);
+      if (!LEGAL_ALIGNABLE_NODES.includes(node.type.name)) continue;
+      positions.add(resolved.before(depth));
+    }
+  }
+
+  const transaction = state.tr;
+
+  [...positions]
+    .sort((first, second) => first - second)
+    .forEach((position) => {
+      const node = transaction.doc.nodeAt(position);
+      if (!node || !LEGAL_ALIGNABLE_NODES.includes(node.type.name)) return;
+
+      transaction.setNodeMarkup(position, undefined, {
+        ...node.attrs,
+        lawAlign: alignment,
+      });
+    });
+
+  if (transaction.docChanged) {
+    view.dispatch(transaction);
+    view.focus();
+  }
+}
 
 type TextEditorProps = {
   value: string;
@@ -62,6 +156,7 @@ export default function TextEditor({
       }),
 
       TextStyleKit,
+      ...(mode === "legal" ? [LegalBlockAlignmentExtension] : []),
     ],
 
     content: normalizeContent(value),
@@ -223,6 +318,11 @@ export default function TextEditor({
     chain.setColor("#f4f4f5").setBackgroundColor("#4a171b").run();
   }
 
+  function applyLegalAlignment(alignment: LegalBlockAlignment) {
+    if (!editor) return;
+    setLegalBlockAlignment(editor, alignment);
+  }
+
   function clearFormatting() {
     if (!editor || !requireSelection()) return;
 
@@ -234,14 +334,199 @@ export default function TextEditor({
     editor.chain().focus().insertContent(html).run();
   }
 
-  function toggleBlockquote() {
+  function getSelectedLegalTextBlocks() {
+    if (!editor) return [];
+
+    const { state } = editor;
+    const { from, to, $from, $to } = state.selection;
+    const positions = new Set<number>();
+
+    state.doc.nodesBetween(from, to, (node, position) => {
+      if (node.isTextblock && ["paragraph", "heading"].includes(node.type.name)) {
+        positions.add(position);
+      }
+    });
+
+    for (const resolved of [$from, $to]) {
+      for (let depth = resolved.depth; depth > 0; depth -= 1) {
+        const node = resolved.node(depth);
+        if (!node.isTextblock) continue;
+        if (!["paragraph", "heading"].includes(node.type.name)) continue;
+        positions.add(resolved.before(depth));
+        break;
+      }
+    }
+
+    return [...positions].sort((first, second) => second - first);
+  }
+
+  function applyLegalStructureToSelection({
+    nodeType,
+    level,
+    prefix,
+    prefixPattern,
+  }: {
+    nodeType: "paragraph" | "heading";
+    level?: 2 | 3 | 4;
+    prefix?: string;
+    prefixPattern?: RegExp;
+  }) {
+    if (!editor) return false;
+
+    const positions = getSelectedLegalTextBlocks();
+    if (!positions.length) return false;
+
+    const { state, view } = editor;
+    const transaction = state.tr;
+    const targetType = state.schema.nodes[nodeType];
+    const boldMark = state.schema.marks.bold?.create();
+
+    for (const position of positions) {
+      const node = transaction.doc.nodeAt(position);
+      if (!node || !node.isTextblock) continue;
+
+      const lawAlign = node.attrs.lawAlign || null;
+      const attributes =
+        nodeType === "heading"
+          ? { level: level || 2, lawAlign }
+          : { lawAlign };
+
+      if (node.type !== targetType || (level && node.attrs.level !== level)) {
+        transaction.setNodeMarkup(
+          position,
+          targetType,
+          attributes,
+          node.marks
+        );
+      }
+
+      const currentNode = transaction.doc.nodeAt(position);
+      if (!currentNode || !prefix) continue;
+
+      const plainText = currentNode.textContent.trimStart();
+      const existingPrefix = prefixPattern?.exec(plainText)?.[0];
+
+      if (existingPrefix) {
+        if (boldMark) {
+          const leadingWhitespace = currentNode.textContent.length - plainText.length;
+          const markFrom = position + 1 + leadingWhitespace;
+          transaction.addMark(
+            markFrom,
+            markFrom + existingPrefix.length,
+            boldMark
+          );
+        }
+        continue;
+      }
+
+      const insertPosition = position + 1;
+      const prefixNode = state.schema.text(
+        prefix,
+        boldMark ? [boldMark] : undefined
+      );
+
+      transaction.insert(insertPosition, prefixNode);
+      transaction.insertText(" ", insertPosition + prefix.length);
+    }
+
+    if (!transaction.docChanged) return false;
+
+    view.dispatch(transaction.scrollIntoView());
+    view.focus();
+    return true;
+  }
+
+  function applyLegalStructure(
+    type: "section" | "chapter" | "article" | "part" | "subpoint" | "note"
+  ) {
     if (!editor) return;
-    editor.chain().focus().toggleBlockquote().run();
+
+    const hasSelectedText = !editor.state.selection.empty;
+
+    if (!hasSelectedText) {
+      const templates = {
+        section: "<h2>РАЗДЕЛ I. НАЗВАНИЕ РАЗДЕЛА</h2>",
+        chapter: "<h3>ГЛАВА 1. НАЗВАНИЕ ГЛАВЫ</h3>",
+        article: "<h4>Статья 1. Название статьи</h4>",
+        part: "<p><strong>ч. 1</strong> Текст части.</p>",
+        subpoint: "<p><strong>а)</strong> Текст подпункта;</p>",
+        note: "<blockquote><strong>Примечание:</strong> Текст примечания.</blockquote>",
+      } as const;
+
+      insertLegalTemplate(templates[type]);
+      return;
+    }
+
+    if (type === "section") {
+      applyLegalStructureToSelection({
+        nodeType: "heading",
+        level: 2,
+        prefix: "РАЗДЕЛ I.",
+        prefixPattern: /^РАЗДЕЛ\s+[IVXLCDM\d]+(?:\.|\s)/i,
+      });
+      return;
+    }
+
+    if (type === "chapter") {
+      applyLegalStructureToSelection({
+        nodeType: "heading",
+        level: 3,
+        prefix: "ГЛАВА 1.",
+        prefixPattern: /^ГЛАВА\s+\d+(?:\.\d+)?(?:\.|\s)/i,
+      });
+      return;
+    }
+
+    if (type === "article") {
+      applyLegalStructureToSelection({
+        nodeType: "heading",
+        level: 4,
+        prefix: "Статья 1.",
+        prefixPattern: /^Статья\s+\d+(?:\.\d+)?(?:\.|\s)/i,
+      });
+      return;
+    }
+
+    if (type === "part") {
+      applyLegalStructureToSelection({
+        nodeType: "paragraph",
+        prefix: "ч. 1",
+        prefixPattern: /^ч\.\s*\d+(?:\.\d+)?/i,
+      });
+      return;
+    }
+
+    if (type === "subpoint") {
+      applyLegalStructureToSelection({
+        nodeType: "paragraph",
+        prefix: "а)",
+        prefixPattern: /^[а-яёa-z]\)/i,
+      });
+      return;
+    }
+
+    const changed = applyLegalStructureToSelection({
+      nodeType: "paragraph",
+      prefix: "Примечание:",
+      prefixPattern: /^(?:Примечание|Исключение)\s*:/i,
+    });
+
+    if (changed) {
+      editor.chain().focus().setBlockquote().run();
+    }
   }
 
   function insertDivider() {
     if (!editor) return;
-    editor.chain().focus().setHorizontalRule().run();
+
+    const insertionPosition = editor.state.selection.to;
+
+    editor
+      .chain()
+      .focus()
+      .setTextSelection(insertionPosition)
+      .setHorizontalRule()
+      .run();
   }
 
   if (!editor) {
@@ -253,60 +538,78 @@ export default function TextEditor({
       <div className={styles.toolbar}>
         {mode === "legal" && (
           <div className={styles.legalTools}>
-            <span>Структура закона</span>
+            <div className={styles.legalToolGroup}>
+              <span>Структура закона</span>
 
-            <button
-              type="button"
-              onClick={() =>
-                insertLegalTemplate("<h2>РАЗДЕЛ I. НАЗВАНИЕ РАЗДЕЛА</h2>")
-              }
-            >
-              Раздел
-            </button>
+              <button
+                type="button"
+                onClick={() => applyLegalStructure("section")}
+              >
+                Раздел
+              </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                insertLegalTemplate("<h3>ГЛАВА 1. НАЗВАНИЕ ГЛАВЫ</h3>")
-              }
-            >
-              Глава
-            </button>
+              <button
+                type="button"
+                onClick={() => applyLegalStructure("chapter")}
+              >
+                Глава
+              </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                insertLegalTemplate("<h4>Статья 1. Название статьи</h4>")
-              }
-            >
-              Статья
-            </button>
+              <button
+                type="button"
+                onClick={() => applyLegalStructure("article")}
+              >
+                Статья
+              </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                insertLegalTemplate("<p><strong>ч. 1</strong> Текст части.</p>")
-              }
-            >
-              Часть
-            </button>
+              <button
+                type="button"
+                onClick={() => applyLegalStructure("part")}
+              >
+                Часть
+              </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                insertLegalTemplate("<p><strong>а)</strong> Текст подпункта;</p>")
-              }
-            >
-              Подпункт
-            </button>
+              <button
+                type="button"
+                onClick={() => applyLegalStructure("subpoint")}
+              >
+                Подпункт
+              </button>
 
-            <button type="button" onClick={toggleBlockquote}>
-              Примечание
-            </button>
+              <button type="button" onClick={() => applyLegalStructure("note")}>
+                Примечание
+              </button>
 
-            <button type="button" onClick={insertDivider}>
-              Разделитель
-            </button>
+              <button type="button" onClick={insertDivider}>
+                Разделитель
+              </button>
+            </div>
+
+            <div className={styles.legalToolGroup}>
+              <span>Положение блока</span>
+              {([
+                ["left", "К левому краю", "⇤"],
+                ["left-indent", "Слева с отступом", "↤"],
+                ["center", "По центру", "↔"],
+                ["right-indent", "Справа с отступом", "↦"],
+                ["right", "К правому краю", "⇥"],
+              ] as const).map(([alignment, label, icon]) => (
+                <button
+                  type="button"
+                  key={alignment}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => applyLegalAlignment(alignment)}
+                  className={
+                    getCurrentLegalAlignment(editor) === alignment
+                      ? styles.activeButton
+                      : ""
+                  }
+                >
+                  <b>{icon}</b> {label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -469,7 +772,7 @@ export default function TextEditor({
 
       <div className={styles.help}>
         {mode === "legal"
-          ? "Кнопки «Раздел», «Глава», «Статья», «Часть» и «Подпункт» вставляют готовую юридическую структуру в позицию курсора. Остальные инструменты редактора продолжают работать без ограничений."
+          ? "При выделенном тексте кнопки структуры сохраняют его и превращают в раздел, главу, статью, часть, подпункт или примечание. Без выделения вставляется готовая заготовка. «Разделитель» добавляется после выделенного текста. Пять кнопок положения применяются к текущему блоку или ко всем выделенным абзацам."
           : "Выдели текст и выбери цвет или фон. Кнопка «Клавиша» создаёт компактное выделение как у ESC. “• Список” — список с точками, “1. Список” — нумерованный."}
       </div>
     </div>
