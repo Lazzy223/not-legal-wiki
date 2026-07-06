@@ -31,6 +31,7 @@ export default function LawsPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -79,15 +80,38 @@ export default function LawsPage() {
         searchInputRef.current?.focus();
       }
 
-      if (event.key === "Escape" && document.activeElement === searchInputRef.current) {
-        setSearch("");
-        searchInputRef.current?.blur();
+      if (event.key === "F2") {
+        event.preventDefault();
+        setCatalogOpen((current) => !current);
+      }
+
+      if (event.key === "Escape") {
+        if (catalogOpen) {
+          setCatalogOpen(false);
+          return;
+        }
+
+        if (document.activeElement === searchInputRef.current) {
+          setSearch("");
+          searchInputRef.current?.blur();
+        }
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [catalogOpen]);
+
+  useEffect(() => {
+    if (!catalogOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [catalogOpen]);
 
   const visibleDocuments = useMemo(
     () => documents.filter((item) => lawDocumentMatches(item, search)),
@@ -130,6 +154,7 @@ export default function LawsPage() {
     const url = new URL(window.location.href);
     url.searchParams.set("law", id);
     window.history.replaceState({}, "", url);
+    setCatalogOpen(false);
     window.scrollTo({ top: 260, behavior: "smooth" });
   }
 
@@ -152,6 +177,13 @@ export default function LawsPage() {
         </Link>
 
         <nav className={styles.nav}>
+          <button
+            type="button"
+            className={styles.catalogNavButton}
+            onClick={() => setCatalogOpen(true)}
+          >
+            Каталог законов <kbd>F2</kbd>
+          </button>
           <Link href="/wiki">Wiki</Link>
           <Link href="/wiki/laws" className={styles.activeNav}>
             Законка
@@ -178,6 +210,17 @@ export default function LawsPage() {
 
         <WikiTopActions />
       </header>
+
+      <button
+        type="button"
+        className={styles.catalogTrigger}
+        onClick={() => setCatalogOpen(true)}
+        aria-label="Открыть каталог законов"
+      >
+        <span>§</span>
+        <b>Каталог законов</b>
+        <kbd>F2</kbd>
+      </button>
 
       <section className={styles.hero}>
         <div>
@@ -228,10 +271,31 @@ export default function LawsPage() {
 
       {!loading && !loadError && documents.length > 0 && (
         <section className={styles.layout}>
-          <aside className={styles.catalog}>
+          {catalogOpen && (
+            <button
+              type="button"
+              className={styles.drawerBackdrop}
+              onClick={() => setCatalogOpen(false)}
+              aria-label="Закрыть каталог"
+            />
+          )}
+
+          <aside
+            className={`${styles.catalog} ${catalogOpen ? styles.catalogOpen : ""}`}
+            aria-hidden={!catalogOpen}
+          >
             <div className={styles.panelTitle}>
-              <span>Документы</span>
-              <b>{visibleDocuments.length}</b>
+              <span>Каталог законов</span>
+              <div className={styles.panelTitleActions}>
+                <b>{visibleDocuments.length}</b>
+                <button
+                  type="button"
+                  onClick={() => setCatalogOpen(false)}
+                  aria-label="Закрыть каталог"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
             <div className={styles.documentList}>
@@ -307,6 +371,12 @@ export default function LawsPage() {
               <b>{headings.length}</b>
             </div>
 
+            <div className={styles.contentsSummary}>
+              <span>Разделов {headings.filter((item) => item.level === 2).length}</span>
+              <span>Глав {headings.filter((item) => item.level === 3).length}</span>
+              <span>Статей {headings.filter((item) => item.level === 4).length}</span>
+            </div>
+
             <nav>
               {headings.map((heading) => (
                 <a
@@ -314,7 +384,14 @@ export default function LawsPage() {
                   href={`#${heading.id}`}
                   className={styles[`level${heading.level}`]}
                 >
-                  {heading.title}
+                  <small>
+                    {heading.level === 2
+                      ? "Раздел"
+                      : heading.level === 3
+                        ? "Глава"
+                        : "Статья"}
+                  </small>
+                  <span>{heading.title}</span>
                 </a>
               ))}
             </nav>

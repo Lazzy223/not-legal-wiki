@@ -673,3 +673,175 @@
     flex-direction: column;
   }
 }
+
+/* F2 law catalog drawer and wider editor workspace */
+.headerActions button,
+.headerActions a {
+  min-height: 38px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #b9b9c0;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.headerActions button {
+  color: #f2b0b0;
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.headerActions button kbd,
+.catalogTrigger kbd {
+  padding: 3px 5px;
+  color: #ef9a9a;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  font: inherit;
+  font-size: 8px;
+}
+
+.catalogTrigger {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  z-index: 145;
+  min-height: 46px;
+  padding: 0 10px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #d7d7dc;
+  background: rgba(10, 11, 14, 0.96);
+  border: 1px solid rgba(239, 68, 68, 0.23);
+  border-left: 0;
+  cursor: pointer;
+  transform: translateY(-50%);
+  backdrop-filter: blur(14px);
+}
+
+.catalogTrigger span {
+  color: #ef5b5b;
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+
+.catalogTrigger b {
+  font-size: 9px;
+  letter-spacing: 0.65px;
+  text-transform: uppercase;
+}
+
+.workspace {
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 18px;
+}
+
+.editor {
+  grid-column: 1;
+}
+
+.preview {
+  position: sticky;
+  top: 18px;
+  grid-column: 2;
+  max-height: calc(100vh - 36px);
+}
+
+.catalog {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 210;
+  width: min(390px, calc(100vw - 28px));
+  max-height: none;
+  overflow: auto;
+  background: #0b0c0f;
+  border: 0;
+  border-right: 1px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 28px 0 80px rgba(0, 0, 0, 0.5);
+  transform: translateX(-104%);
+  visibility: hidden;
+  transition:
+    transform 0.24s ease,
+    visibility 0.24s ease;
+}
+
+.catalogOpen {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.66);
+  border: 0;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.drawerHeadActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.drawerHeadActions > b {
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #ef7777;
+  background: rgba(239, 68, 68, 0.075);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 10px;
+}
+
+.drawerHeadActions > button {
+  width: 31px;
+  height: 31px;
+  color: #b8b8bf;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+@media (max-width: 1280px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .editor,
+  .preview {
+    grid-column: 1;
+  }
+
+  .preview {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 850px) {
+  .catalog {
+    position: fixed;
+    max-height: none;
+  }
+
+  .catalogTrigger {
+    top: auto;
+    bottom: 18px;
+    transform: none;
+  }
+
+  .catalogTrigger b {
+    display: none;
+  }
+}

@@ -44,6 +44,7 @@ export default function AdminLawsPage() {
   const [documents, setDocuments] = useState<LawDocument[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [listSearch, setListSearch] = useState("");
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   const [number, setNumber] = useState("01");
   const [icon, setIcon] = useState("§");
@@ -182,6 +183,33 @@ export default function AdminLawsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "F2") {
+        event.preventDefault();
+        setCatalogOpen((current) => !current);
+      }
+
+      if (event.key === "Escape" && catalogOpen) {
+        setCatalogOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [catalogOpen]);
+
+  useEffect(() => {
+    if (!catalogOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [catalogOpen]);
+
   function resetForm() {
     setEditingId(null);
     setNumber(String(documents.length + 1).padStart(2, "0"));
@@ -198,6 +226,7 @@ export default function AdminLawsPage() {
     setContentHtml(defaultLegalContent());
     setImportText("");
     setMessage("");
+    setCatalogOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -222,6 +251,7 @@ export default function AdminLawsPage() {
       setMessage(`Открыт документ: ${item.title}`);
     }
 
+    setCatalogOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -364,12 +394,26 @@ export default function AdminLawsPage() {
         </div>
 
         <div className={styles.headerActions}>
+          <button type="button" onClick={() => setCatalogOpen(true)}>
+            Каталог законов <kbd>F2</kbd>
+          </button>
           <Link href="/wiki/laws" target="_blank">
             Открыть законку ↗
           </Link>
           <Link href="/admin">В админ-панель</Link>
         </div>
       </header>
+
+      <button
+        type="button"
+        className={styles.catalogTrigger}
+        onClick={() => setCatalogOpen(true)}
+        aria-label="Открыть каталог законов"
+      >
+        <span>§</span>
+        <b>Каталог законов</b>
+        <kbd>F2</kbd>
+      </button>
 
       <section className={styles.stats}>
         <article><span>Документов</span><b>{documents.length}</b></article>
@@ -379,10 +423,31 @@ export default function AdminLawsPage() {
       </section>
 
       <section className={styles.workspace}>
-        <aside className={styles.catalog}>
+        {catalogOpen && (
+          <button
+            type="button"
+            className={styles.drawerBackdrop}
+            onClick={() => setCatalogOpen(false)}
+            aria-label="Закрыть каталог"
+          />
+        )}
+
+        <aside
+          className={`${styles.catalog} ${catalogOpen ? styles.catalogOpen : ""}`}
+          aria-hidden={!catalogOpen}
+        >
           <div className={styles.panelHead}>
-            <div><span>01 / CATALOG</span><h2>Документы</h2></div>
-            <b>{documents.length}</b>
+            <div><span>01 / CATALOG</span><h2>Каталог законов</h2></div>
+            <div className={styles.drawerHeadActions}>
+              <b>{documents.length}</b>
+              <button
+                type="button"
+                onClick={() => setCatalogOpen(false)}
+                aria-label="Закрыть каталог"
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <button type="button" className={styles.newButton} onClick={resetForm}>

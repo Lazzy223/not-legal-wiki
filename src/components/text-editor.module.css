@@ -192,3 +192,78 @@
   background: rgba(239, 68, 68, 0.055);
   border-left: 3px solid #ef4444;
 }
+
+.legalToolGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.legalToolGroup + .legalToolGroup {
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(239, 68, 68, 0.12);
+}
+
+.legalToolGroup > span {
+  margin-right: 3px;
+  color: #ef8b8b;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.legalToolGroup button b {
+  margin-right: 4px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.editor :global(.ProseMirror [data-law-align]) {
+  box-sizing: border-box;
+  transition:
+    padding 0.18s ease,
+    text-align 0.18s ease;
+}
+
+.editor :global(.ProseMirror [data-law-align="left"]) {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  text-align: left !important;
+}
+
+.editor :global(.ProseMirror [data-law-align="left-indent"]) {
+  padding-right: 0 !important;
+  padding-left: clamp(28px, 5vw, 64px) !important;
+  text-align: left !important;
+}
+
+.editor :global(.ProseMirror [data-law-align="center"]) {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  text-align: center !important;
+}
+
+.editor :global(.ProseMirror [data-law-align="right-indent"]) {
+  padding-right: clamp(28px, 5vw, 64px) !important;
+  padding-left: 0 !important;
+  text-align: right !important;
+}
+
+.editor :global(.ProseMirror [data-law-align="right"]) {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  text-align: right !important;
+}
+
+@media (max-width: 720px) {
+  .editor :global(.ProseMirror [data-law-align="left-indent"]) {
+    padding-left: 24px !important;
+  }
+
+  .editor :global(.ProseMirror [data-law-align="right-indent"]) {
+    padding-right: 24px !important;
+  }
+}

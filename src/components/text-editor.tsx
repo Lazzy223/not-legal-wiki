@@ -133,6 +133,7 @@ export default function TextEditor({
   mode = "default",
 }: TextEditorProps) {
   const lastValueRef = useRef("");
+  const lastTextSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
 
   const editor = useEditor({
@@ -164,7 +165,9 @@ export default function TextEditor({
 
     onCreate({ editor }) {
       lastValueRef.current = editor.getHTML();
-      setHasSelection(!editor.state.selection.empty);
+      const { from, to } = editor.state.selection;
+      if (from !== to) lastTextSelectionRef.current = { from, to };
+      setHasSelection(from !== to);
     },
 
     onUpdate({ editor }) {
@@ -172,11 +175,15 @@ export default function TextEditor({
 
       lastValueRef.current = html;
       onChange(html);
-      setHasSelection(!editor.state.selection.empty);
+      const { from, to } = editor.state.selection;
+      if (from !== to) lastTextSelectionRef.current = { from, to };
+      setHasSelection(from !== to);
     },
 
     onSelectionUpdate({ editor }) {
-      setHasSelection(!editor.state.selection.empty);
+      const { from, to } = editor.state.selection;
+      if (from !== to) lastTextSelectionRef.current = { from, to };
+      setHasSelection(from !== to);
     },
   });
 
@@ -191,10 +198,27 @@ export default function TextEditor({
     }
   }, [editor, value]);
 
+  function restoreLastTextSelection() {
+    if (!editor) return false;
+    if (!editor.state.selection.empty) return true;
+
+    const saved = lastTextSelectionRef.current;
+    if (!saved) return false;
+
+    const maximumPosition = editor.state.doc.content.size;
+    const from = Math.max(1, Math.min(saved.from, maximumPosition));
+    const to = Math.max(from, Math.min(saved.to, maximumPosition));
+
+    if (from === to) return false;
+
+    editor.commands.setTextSelection({ from, to });
+    return !editor.state.selection.empty;
+  }
+
   function requireSelection() {
     if (!editor) return false;
 
-    if (editor.state.selection.empty) {
+    if (!restoreLastTextSelection()) {
       alert("Сначала выдели текст, потом нажми кнопку.");
       return false;
     }
@@ -319,8 +343,11 @@ export default function TextEditor({
   }
 
   function applyLegalAlignment(alignment: LegalBlockAlignment) {
-    if (!editor) return;
+    if (!editor || !requireSelection()) return;
     setLegalBlockAlignment(editor, alignment);
+
+    const { from, to } = editor.state.selection;
+    if (from !== to) lastTextSelectionRef.current = { from, to };
   }
 
   function clearFormatting() {
@@ -537,7 +564,14 @@ export default function TextEditor({
     <div className={styles.editorBox}>
       <div className={styles.toolbar}>
         {mode === "legal" && (
-          <div className={styles.legalTools}>
+          <div
+            className={styles.legalTools}
+            onMouseDown={(event) => {
+              if ((event.target as HTMLElement).closest("button")) {
+                event.preventDefault();
+              }
+            }}
+          >
             <div className={styles.legalToolGroup}>
               <span>Структура закона</span>
 
