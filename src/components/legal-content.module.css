@@ -276,3 +276,36 @@
     padding-left: 18px;
   }
 }
+
+.content :global([data-law-kind="title"]) {
+  max-width: 900px;
+  margin: 8px auto 20px;
+  color: #f5f5f6;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(20px, 2.7vw, 34px);
+  line-height: 1.3;
+  font-weight: 850;
+  text-align: center !important;
+}
+
+.content :global([data-law-kind="section"]),
+.content :global([data-law-kind="chapter"]) {
+  text-align: center !important;
+}
+
+.content :global([data-law-kind="article"]) {
+  text-align: left !important;
+}
+
+.content :global(ul[data-law-list-color] li::marker),
+.content :global(ol[data-law-list-color] li::marker) {
+  color: var(--law-list-color, #dc4c4c) !important;
+}
+
+.content :global([data-law-kind="subpoint"]) {
+  --law-list-color: #dc4c4c;
+}
+
+.content :global([data-law-toc="true"]) {
+  scroll-margin-top: 108px;
+}

@@ -72,7 +72,7 @@
 
 .editor :global(.ProseMirror h2) {
   margin: 26px 0 14px;
-  color: #ffd84b;
+  color: #f4f4f5;
   font-size: 30px;
   line-height: 1.15;
   font-weight: 1000;
@@ -80,7 +80,7 @@
 
 .editor :global(.ProseMirror h3) {
   margin: 22px 0 12px;
-  color: #ffd84b;
+  color: #f4f4f5;
   font-size: 24px;
   line-height: 1.15;
   font-weight: 1000;
@@ -312,4 +312,71 @@
   .editor :global(.ProseMirror [data-law-kind="subpoint"]) {
     padding-left: 18px;
   }
+}
+
+.legalColorControl {
+  min-height: 36px;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #bcbcc4;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 9px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.legalColorControl input {
+  width: 30px;
+  height: 24px;
+  padding: 1px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.editor :global(.ProseMirror [data-law-kind="title"]) {
+  margin: 8px auto 18px;
+  color: #f4f4f5;
+  font-size: 22px;
+  line-height: 1.35;
+  font-weight: 900;
+  text-align: center !important;
+}
+
+.editor :global(.ProseMirror [data-law-kind="section"]),
+.editor :global(.ProseMirror [data-law-kind="chapter"]) {
+  text-align: center;
+}
+
+.editor :global(.ProseMirror [data-law-kind="article"]) {
+  text-align: left;
+}
+
+.editor :global(.ProseMirror [data-law-toc="true"]) {
+  outline: 1px dashed rgba(239, 68, 68, 0.38);
+  outline-offset: 4px;
+}
+
+.editor :global(.ProseMirror [data-law-toc="true"]::after) {
+  content: "  · содержание";
+  color: #ef8585;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.editor :global(.ProseMirror ul[data-law-list-color] li::marker),
+.editor :global(.ProseMirror ol[data-law-list-color] li::marker) {
+  color: var(--law-list-color, #ef4444) !important;
+}
+
+.editor :global(.ProseMirror [data-law-kind="subpoint"]) > strong:first-child,
+.editor :global(.ProseMirror [data-law-kind="subpoint"]) > b:first-child {
+  color: var(--law-list-color, inherit);
 }

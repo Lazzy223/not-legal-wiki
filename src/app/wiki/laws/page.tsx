@@ -236,7 +236,7 @@ export default function LawsPage() {
           <h1>Законодательство</h1>
           <p>
             Законы, кодексы и иные нормативные акты в единой официальной
-            структуре с быстрым переходом по разделам, главам и статьям.
+            структуре с быстрым переходом по главам документа.
           </p>
         </div>
 
@@ -372,9 +372,7 @@ export default function LawsPage() {
             </div>
 
             <div className={styles.contentsSummary}>
-              <span>Разделов {headings.filter((item) => item.level === 2).length}</span>
-              <span>Глав {headings.filter((item) => item.level === 3).length}</span>
-              <span>Статей {headings.filter((item) => item.level === 4).length}</span>
+              <span>Глав в документе: {headings.length}</span>
             </div>
 
             <nav>
@@ -384,13 +382,7 @@ export default function LawsPage() {
                   href={`#${heading.id}`}
                   className={styles[`level${heading.level}`]}
                 >
-                  <small>
-                    {heading.level === 2
-                      ? "Раздел"
-                      : heading.level === 3
-                        ? "Глава"
-                        : "Статья"}
-                  </small>
+                  <small>Глава</small>
                   <span>{heading.title}</span>
                 </a>
               ))}
@@ -398,7 +390,7 @@ export default function LawsPage() {
 
             {headings.length === 0 && (
               <div className={styles.emptySearch}>
-                Добавь в документ разделы, главы и статьи — они появятся здесь.
+                Добавь главы или отметь нужный абзац кнопкой «В содержание».
               </div>
             )}
           </aside>

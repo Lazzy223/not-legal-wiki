@@ -59,6 +59,10 @@ export default function AdminLawsPage() {
   const [published, setPublished] = useState(true);
   const [contentHtml, setContentHtml] = useState(defaultLegalContent());
   const [importText, setImportText] = useState("");
+  const [legalChapterColor, setLegalChapterColor] = useState("#f4f4f5");
+  const [legalArticleColor, setLegalArticleColor] = useState("#ef4444");
+  const [legalListColor, setLegalListColor] = useState("#ef4444");
+  const [italicizeImportedArticles, setItalicizeImportedArticles] = useState(false);
   const [updateUpdatedAt, setUpdateUpdatedAt] = useState(true);
 
   const [message, setMessage] = useState("");
@@ -280,10 +284,17 @@ export default function AdminLawsPage() {
       return;
     }
 
-    setContentHtml(legalPlainTextToHtml(source));
+    setContentHtml(
+      legalPlainTextToHtml(source, {
+        chapterColor: legalChapterColor,
+        articleColor: legalArticleColor,
+        listColor: legalListColor,
+        italicizeArticleBody: italicizeImportedArticles,
+      })
+    );
     setMessageType("success");
     setMessage(
-      "Текст преобразован: разделы, главы, статьи, части и примечания распознаны автоматически."
+      "Текст распознан и оформлен: названия и главы по центру, статьи слева, содержание построено только по главам."
     );
   }
 
@@ -533,6 +544,61 @@ export default function AdminLawsPage() {
               <span>Распознаёт разделы, главы, статьи, части, подпункты и примечания</span>
             </div>
 
+            <div className={styles.importSettings}>
+              <label>
+                <span>Цвет глав и названий</span>
+                <div>
+                  <input
+                    type="color"
+                    value={legalChapterColor}
+                    onChange={(event) => setLegalChapterColor(event.target.value)}
+                  />
+                  <code>{legalChapterColor}</code>
+                </div>
+              </label>
+
+              <label>
+                <span>Цвет статей</span>
+                <div>
+                  <input
+                    type="color"
+                    value={legalArticleColor}
+                    onChange={(event) => setLegalArticleColor(event.target.value)}
+                  />
+                  <code>{legalArticleColor}</code>
+                </div>
+              </label>
+
+              <label>
+                <span>Цвет списков и подпунктов</span>
+                <div>
+                  <input
+                    type="color"
+                    value={legalListColor}
+                    onChange={(event) => setLegalListColor(event.target.value)}
+                  />
+                  <code>{legalListColor}</code>
+                </div>
+              </label>
+
+              <label className={styles.importToggle}>
+                <input
+                  type="checkbox"
+                  checked={italicizeImportedArticles}
+                  onChange={(event) =>
+                    setItalicizeImportedArticles(event.target.checked)
+                  }
+                />
+                <span>Сразу сделать текст внутри статей курсивом</span>
+              </label>
+            </div>
+
+            <div className={styles.importHint}>
+              Умный импорт распознаёт римские и обычные номера глав, центрирует
+              названия и главы, оставляет статьи слева и создаёт содержание только
+              из глав.
+            </div>
+
             <textarea
               value={importText}
               onChange={(event) => setImportText(event.target.value)}
@@ -559,10 +625,20 @@ export default function AdminLawsPage() {
           <div className={styles.formBlock}>
             <div className={styles.formTitle}>
               <b>Текст нормативного акта</b>
-              <span>{articleCount} статей · {headingCount} пунктов содержания</span>
+              <span>{articleCount} статей · {headingCount} глав в содержании</span>
             </div>
 
-            <TextEditor mode="legal" value={contentHtml} onChange={setContentHtml} />
+            <TextEditor
+              mode="legal"
+              value={contentHtml}
+              onChange={setContentHtml}
+              legalChapterColor={legalChapterColor}
+              legalArticleColor={legalArticleColor}
+              legalListColor={legalListColor}
+              onLegalChapterColorChange={setLegalChapterColor}
+              onLegalArticleColorChange={setLegalArticleColor}
+              onLegalListColorChange={setLegalListColor}
+            />
           </div>
 
           {message && (

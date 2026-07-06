@@ -1,7 +1,21 @@
 export type LawHeading = {
   id: string;
-  level: 2 | 3 | 4;
+  level: 3;
   title: string;
+};
+
+export type LegalImportOptions = {
+  chapterColor?: string;
+  articleColor?: string;
+  listColor?: string;
+  italicizeArticleBody?: boolean;
+};
+
+export const DEFAULT_LEGAL_IMPORT_OPTIONS: Required<LegalImportOptions> = {
+  chapterColor: "#f4f4f5",
+  articleColor: "#ef4444",
+  listColor: "#ef4444",
+  italicizeArticleBody: false,
 };
 
 function decodeHtmlEntities(value: string) {
@@ -20,6 +34,87 @@ function stripTags(value: string) {
     .trim();
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value: string) {
+  return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+function cleanPlainText(value: string) {
+  return value
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
+}
+
+function normalizeColor(value: string | undefined, fallback: string) {
+  const candidate = value?.trim();
+  return candidate && /^#[0-9a-f]{6}$/i.test(candidate) ? candidate : fallback;
+}
+
+function hasAttribute(attributes: string, name: string) {
+  return new RegExp(`\\s${name}=(?:"[^"]*"|'[^']*'|[^\\s>]+)`, "i").test(
+    attributes
+  );
+}
+
+function ensureAttribute(attributes: string, name: string, value: string) {
+  if (hasAttribute(attributes, name)) return attributes;
+  return `${attributes} ${name}="${escapeAttribute(value)}"`;
+}
+
+function isSectionTitle(value: string) {
+  return /^РАЗДЕЛ\s+[IVXLCDM\d]+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
+}
+
+function isChapterTitle(value: string) {
+  return /^ГЛАВА\s+[IVXLCDM\d]+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
+}
+
+function isArticleTitle(value: string) {
+  return /^Статья\s+\d+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
+}
+
+export function normalizeLawStructureHtml(html: string) {
+  if (!html.trim()) return html;
+
+  return html.replace(
+    /<p([^>]*)>([\s\S]*?)<\/p>/gi,
+    (full, rawAttributes: string, inner: string) => {
+      const title = stripTags(inner);
+      let attributes = rawAttributes || "";
+
+      if (isSectionTitle(title)) {
+        attributes = ensureAttribute(attributes, "data-law-kind", "section");
+        attributes = ensureAttribute(attributes, "data-law-align", "center");
+        return `<h2${attributes}>${inner}</h2>`;
+      }
+
+      if (isChapterTitle(title)) {
+        attributes = ensureAttribute(attributes, "data-law-kind", "chapter");
+        attributes = ensureAttribute(attributes, "data-law-align", "center");
+        return `<h3${attributes}>${inner}</h3>`;
+      }
+
+      if (isArticleTitle(title)) {
+        attributes = ensureAttribute(attributes, "data-law-kind", "article");
+        attributes = ensureAttribute(attributes, "data-law-align", "left");
+        return `<h4${attributes}>${inner}</h4>`;
+      }
+
+      return full;
+    }
+  );
+}
+
 function slugify(value: string, index: number) {
   const slug = value
     .toLowerCase()
@@ -31,18 +126,32 @@ function slugify(value: string, index: number) {
   return slug || `law-heading-${index + 1}`;
 }
 
+function isTocBlock(tag: string, attributes: string, title: string) {
+  return (
+    tag.toLowerCase() === "h3" ||
+    /data-law-kind=(?:"chapter"|'chapter'|chapter)/i.test(attributes) ||
+    /data-law-toc=(?:"true"|'true'|true)/i.test(attributes) ||
+    isChapterTitle(title)
+  );
+}
+
+const TOC_BLOCK_EXPRESSION =
+  /<(h[234]|p|blockquote)([^>]*)>([\s\S]*?)<\/\1>/gi;
+
 export function getLawHeadings(html: string): LawHeading[] {
+  const normalizedHtml = normalizeLawStructureHtml(html);
   const headings: LawHeading[] = [];
   const used = new Map<string, number>();
-  const expression = /<h([234])(?:\s[^>]*)?>([\s\S]*?)<\/h\1>/gi;
+  const expression = new RegExp(TOC_BLOCK_EXPRESSION.source, "gi");
 
   let match: RegExpExecArray | null;
 
-  while ((match = expression.exec(html))) {
-    const level = Number(match[1]) as 2 | 3 | 4;
-    const title = stripTags(match[2]);
+  while ((match = expression.exec(normalizedHtml))) {
+    const tag = match[1];
+    const attributes = match[2] || "";
+    const title = stripTags(match[3]);
 
-    if (!title) continue;
+    if (!title || !isTocBlock(tag, attributes, title)) continue;
 
     const base = slugify(title, headings.length);
     const count = used.get(base) || 0;
@@ -50,7 +159,7 @@ export function getLawHeadings(html: string): LawHeading[] {
 
     headings.push({
       id: count === 0 ? base : `${base}-${count + 1}`,
-      level,
+      level: 3,
       title,
     });
   }
@@ -59,17 +168,26 @@ export function getLawHeadings(html: string): LawHeading[] {
 }
 
 export function addLawHeadingAnchors(html: string) {
-  const headings = getLawHeadings(html);
-  let index = 0;
+  const normalizedHtml = normalizeLawStructureHtml(html);
+  const headings = getLawHeadings(normalizedHtml);
+  let headingIndex = 0;
 
-  return html.replace(
-    /<h([234])(?:\s[^>]*)?>([\s\S]*?)<\/h\1>/gi,
-    (full, level: string, inner: string) => {
-      const heading = headings[index];
-      index += 1;
+  return normalizedHtml.replace(
+    TOC_BLOCK_EXPRESSION,
+    (full, tag: string, rawAttributes: string = "", inner: string) => {
+      const title = stripTags(inner);
+      if (!isTocBlock(tag, rawAttributes, title)) return full;
 
+      const heading = headings[headingIndex];
+      headingIndex += 1;
       if (!heading) return full;
-      return `<h${level} id="${heading.id}">${inner}</h${level}>`;
+
+      const attributes = rawAttributes.replace(
+        /\s+id=(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+        ""
+      );
+
+      return `<${tag}${attributes} id="${heading.id}">${inner}</${tag}>`;
     }
   );
 }
@@ -115,109 +233,188 @@ export function lawDocumentMatches(
     .includes(normalizedQuery);
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function wrapBodyText(value: string, italic: boolean) {
+  const safe = escapeHtml(value);
+  return italic ? `<em>${safe}</em>` : safe;
 }
 
-function cleanPlainText(value: string) {
-  return value
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
-    .replace(/\r\n?/g, "\n")
-    .replace(/[ \t]+$/gm, "")
-    .trim();
+function coloredText(value: string, color: string) {
+  return `<span style="color: ${escapeAttribute(color)}">${escapeHtml(value)}</span>`;
 }
 
-export function legalPlainTextToHtml(value: string) {
+export function legalPlainTextToHtml(
+  value: string,
+  options: LegalImportOptions = {}
+) {
   const source = cleanPlainText(value);
 
   if (!source) return "<p></p>";
 
+  const settings = {
+    chapterColor: normalizeColor(
+      options.chapterColor,
+      DEFAULT_LEGAL_IMPORT_OPTIONS.chapterColor
+    ),
+    articleColor: normalizeColor(
+      options.articleColor,
+      DEFAULT_LEGAL_IMPORT_OPTIONS.articleColor
+    ),
+    listColor: normalizeColor(
+      options.listColor,
+      DEFAULT_LEGAL_IMPORT_OPTIONS.listColor
+    ),
+    italicizeArticleBody:
+      options.italicizeArticleBody ??
+      DEFAULT_LEGAL_IMPORT_OPTIONS.italicizeArticleBody,
+  };
+
   const lines = source.split("\n");
   const html: string[] = [];
-  let previousWasBlank = false;
+  let insideArticle = false;
+  let hasStructuredHeading = false;
+  let unorderedItems: string[] = [];
+  let orderedItems: string[] = [];
+
+  function flushLists() {
+    if (unorderedItems.length > 0) {
+      html.push(
+        `<ul data-law-list-color="${settings.listColor}" style="--law-list-color: ${settings.listColor}">${unorderedItems
+          .map((item) => `<li>${wrapBodyText(item, settings.italicizeArticleBody && insideArticle)}</li>`)
+          .join("")}</ul>`
+      );
+      unorderedItems = [];
+    }
+
+    if (orderedItems.length > 0) {
+      html.push(
+        `<ol data-law-list-color="${settings.listColor}" style="--law-list-color: ${settings.listColor}">${orderedItems
+          .map((item) => `<li>${wrapBodyText(item, settings.italicizeArticleBody && insideArticle)}</li>`)
+          .join("")}</ol>`
+      );
+      orderedItems = [];
+    }
+  }
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
 
     if (!line) {
-      previousWasBlank = true;
+      flushLists();
       continue;
     }
 
-    const safe = escapeHtml(line);
-
-    if (/^РАЗДЕЛ\s+[IVXLCDM\d]+(?:\.|\s)/i.test(line)) {
-      html.push(`<h2>${safe}</h2>`);
-      previousWasBlank = false;
+    if (isSectionTitle(line)) {
+      flushLists();
+      insideArticle = false;
+      hasStructuredHeading = true;
+      html.push(
+        `<h2 data-law-kind="section" data-law-align="center">${coloredText(line, settings.chapterColor)}</h2>`
+      );
       continue;
     }
 
-    if (/^ГЛАВА\s+\d+(?:\.|\s)/i.test(line)) {
-      html.push(`<h3>${safe}</h3>`);
-      previousWasBlank = false;
+    if (isChapterTitle(line)) {
+      flushLists();
+      insideArticle = false;
+      hasStructuredHeading = true;
+      html.push(
+        `<h3 data-law-kind="chapter" data-law-align="center">${coloredText(line, settings.chapterColor)}</h3>`
+      );
       continue;
     }
 
-    if (/^Статья\s+\d+(?:\.\d+)?(?:\.|\s)/i.test(line)) {
-      html.push(`<h4>${safe}</h4>`);
-      previousWasBlank = false;
+    if (isArticleTitle(line)) {
+      flushLists();
+      insideArticle = true;
+      hasStructuredHeading = true;
+      html.push(
+        `<h4 data-law-kind="article" data-law-align="left">${coloredText(line, settings.articleColor)}</h4>`
+      );
       continue;
     }
 
     if (/^(Примечание|Исключение)\s*:/i.test(line)) {
+      flushLists();
       const [label, ...rest] = line.split(":");
+      const body = rest.join(":").trim();
       html.push(
-        `<blockquote><strong>${escapeHtml(label)}:</strong>${rest.length ? ` ${escapeHtml(rest.join(":").trim())}` : ""}</blockquote>`
+        `<blockquote data-law-kind="note"><strong>${escapeHtml(label)}:</strong>${
+          body ? ` ${wrapBodyText(body, settings.italicizeArticleBody && insideArticle)}` : ""
+        }</blockquote>`
       );
-      previousWasBlank = false;
       continue;
     }
 
     const partMatch = line.match(/^(ч\.\s*\d+(?:\.\d+)?)(?:\s+|$)(.*)$/i);
 
     if (partMatch) {
+      flushLists();
       html.push(
-        `<p><strong>${escapeHtml(partMatch[1])}</strong>${partMatch[2] ? ` ${escapeHtml(partMatch[2])}` : ""}</p>`
+        `<p data-law-kind="part"><strong>${escapeHtml(partMatch[1])}</strong>${
+          partMatch[2]
+            ? ` ${wrapBodyText(partMatch[2], settings.italicizeArticleBody)}`
+            : ""
+        }</p>`
       );
-      previousWasBlank = false;
       continue;
     }
 
     const letterMatch = line.match(/^([а-яёa-z]\))(?:\s+|$)(.*)$/i);
 
     if (letterMatch) {
+      flushLists();
       html.push(
-        `<p><strong>${escapeHtml(letterMatch[1])}</strong>${letterMatch[2] ? ` ${escapeHtml(letterMatch[2])}` : ""}</p>`
+        `<p data-law-kind="subpoint" data-law-list-color="${settings.listColor}" style="--law-list-color: ${settings.listColor}"><span style="color: ${settings.listColor}"><strong>${escapeHtml(letterMatch[1])}</strong></span>${
+          letterMatch[2]
+            ? ` ${wrapBodyText(letterMatch[2], settings.italicizeArticleBody && insideArticle)}`
+            : ""
+        }</p>`
       );
-      previousWasBlank = false;
       continue;
     }
 
-    if (/^Закон$/i.test(line)) {
-      html.push(`<p><strong>${safe}</strong></p>`);
-      previousWasBlank = false;
+    const bulletMatch = line.match(/^[-–—•*]\s+(.+)$/);
+    if (bulletMatch) {
+      if (orderedItems.length) flushLists();
+      unorderedItems.push(bulletMatch[1]);
       continue;
     }
 
-    if (/^[«“"].+[»”"]$/.test(line) && html.length < 4) {
-      html.push(`<h1>${safe}</h1>`);
-      previousWasBlank = false;
+    const orderedMatch = line.match(/^\d+[.)]\s+(.+)$/);
+    if (orderedMatch) {
+      if (unorderedItems.length) flushLists();
+      orderedItems.push(orderedMatch[1]);
       continue;
     }
 
-    if (previousWasBlank && html.length > 0) {
-      html.push(`<p>${safe}</p>`);
-    } else {
-      html.push(`<p>${safe}</p>`);
+    if (!hasStructuredHeading && /^Закон$/i.test(line)) {
+      flushLists();
+      html.push(
+        `<p data-law-kind="title" data-law-align="center"><span style="color: ${settings.chapterColor}"><strong>${escapeHtml(line)}</strong></span></p>`
+      );
+      continue;
     }
 
-    previousWasBlank = false;
+    if (
+      !hasStructuredHeading &&
+      (/^[«“"].+[»”"]$/.test(line) || /^[A-ZА-ЯЁ0-9\s.,«»"“”()\-—]+$/.test(line))
+    ) {
+      flushLists();
+      html.push(
+        `<p data-law-kind="title" data-law-align="center"><span style="color: ${settings.chapterColor}"><strong>${escapeHtml(line)}</strong></span></p>`
+      );
+      continue;
+    }
+
+    flushLists();
+    html.push(
+      `<p data-law-kind="${insideArticle ? "article-body" : "body"}">${wrapBodyText(
+        line,
+        settings.italicizeArticleBody && insideArticle
+      )}</p>`
+    );
   }
 
+  flushLists();
   return html.join("\n");
 }
