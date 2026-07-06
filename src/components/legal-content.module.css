@@ -309,3 +309,8 @@
 .content :global([data-law-toc="true"]) {
   scroll-margin-top: 108px;
 }
+
+/* В заголовке главы цвет применяется только к «ГЛАВА I.», название остаётся белым. */
+.content :global([data-law-chapter-title="true"]) {
+  color: #f4f4f5 !important;
+}

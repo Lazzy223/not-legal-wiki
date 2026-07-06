@@ -496,6 +496,37 @@ export default function TextEditor({
     );
   }
 
+  function applyChapterHeadingColors(
+    transaction: Transaction,
+    node: ProseMirrorNode,
+    position: number,
+    prefixColor: string
+  ) {
+    const textStyle = transaction.doc.type.schema.marks.textStyle;
+    if (!textStyle || node.content.size === 0) return;
+
+    const contentFrom = position + 1;
+    const contentTo = position + node.nodeSize - 1;
+
+    transaction.addMark(
+      contentFrom,
+      contentTo,
+      textStyle.create({ color: "#f4f4f5" })
+    );
+
+    const prefix = node.textContent.match(
+      /^\s*(ГЛАВА\s+[IVXLCDM\d]+(?:\.\d+)?\.?)/i
+    );
+    if (!prefix) return;
+
+    const prefixStart = contentFrom + node.textContent.indexOf(prefix[1]);
+    transaction.addMark(
+      prefixStart,
+      prefixStart + prefix[1].length,
+      textStyle.create({ color: prefixColor })
+    );
+  }
+
   function applyPrefixColor(
     transaction: Transaction,
     node: ProseMirrorNode,
@@ -615,12 +646,21 @@ export default function TextEditor({
           lawKind: kind,
           ...commonAttributes,
         });
-        applyColorToNodeContent(
-          transaction,
-          node,
-          position,
-          kind === "article" ? legalArticleColor : legalChapterColor
-        );
+        if (kind === "chapter") {
+          applyChapterHeadingColors(
+            transaction,
+            node,
+            position,
+            legalChapterColor
+          );
+        } else {
+          applyColorToNodeContent(
+            transaction,
+            node,
+            position,
+            kind === "article" ? legalArticleColor : legalChapterColor
+          );
+        }
         continue;
       }
 
@@ -687,12 +727,21 @@ export default function TextEditor({
           lawKind,
           lawAlign: isArticle ? "left" : "center",
         });
-        applyColorToNodeContent(
-          transaction,
-          node,
-          position,
-          isArticle ? activeArticleColor : activeChapterColor
-        );
+        if (isChapter) {
+          applyChapterHeadingColors(
+            transaction,
+            node,
+            position,
+            activeChapterColor
+          );
+        } else {
+          applyColorToNodeContent(
+            transaction,
+            node,
+            position,
+            isArticle ? activeArticleColor : activeChapterColor
+          );
+        }
         return false;
       }
 

@@ -79,6 +79,50 @@ function isChapterTitle(value: string) {
   return /^ГЛАВА\s+[IVXLCDM\d]+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
 }
 
+function splitChapterHeading(value: string) {
+  const match = value.match(
+    /^\s*(ГЛАВА\s+[IVXLCDM\d]+(?:\.\d+)?\.?)(?:\s+|$)(.*)$/i
+  );
+
+  if (!match) return null;
+
+  return {
+    prefix: match[1].trim(),
+    title: match[2].trim(),
+  };
+}
+
+function extractInlineColor(value: string, fallback: string) {
+  const match = value.match(/color\s*:\s*([^;"']+)/i);
+  return match?.[1]?.trim() || fallback;
+}
+
+function formatChapterHeadingInner(
+  value: string,
+  prefixColor = DEFAULT_LEGAL_IMPORT_OPTIONS.chapterColor
+) {
+  if (/data-law-chapter-prefix=/i.test(value)) return value;
+
+  const plain = stripTags(value);
+  const parts = splitChapterHeading(plain);
+  if (!parts) return value;
+
+  const detectedColor = extractInlineColor(value, prefixColor);
+
+  return [
+    `<span data-law-chapter-prefix="true" style="color: ${escapeAttribute(
+      detectedColor
+    )}">${escapeHtml(parts.prefix)}</span>`,
+    parts.title
+      ? `<span data-law-chapter-title="true" style="color: #f4f4f5">${escapeHtml(
+          parts.title
+        )}</span>`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function isArticleTitle(value: string) {
   return /^Статья\s+\d+(?:\.\d+)?\.?(?:\s+|$)/i.test(value);
 }
@@ -117,7 +161,7 @@ export function normalizeLawStructureHtml(html: string) {
       if (isChapterTitle(title)) {
         attributes = ensureAttribute(attributes, "data-law-kind", "chapter");
         attributes = ensureAttribute(attributes, "data-law-align", "center");
-        return `<h3${attributes}>${inner}</h3>`;
+        return `<h3${attributes}>${formatChapterHeadingInner(inner)}</h3>`;
       }
 
       if (isArticleTitle(title)) {
@@ -130,7 +174,21 @@ export function normalizeLawStructureHtml(html: string) {
     }
   );
 
-  return mergeAdjacentLawLists(structured);
+  const normalizedChapters = structured.replace(
+    /<h3([^>]*)>([\s\S]*?)<\/h3>/gi,
+    (full, rawAttributes: string, inner: string) => {
+      const title = stripTags(inner);
+      if (!isChapterTitle(title)) return full;
+
+      let attributes = rawAttributes || "";
+      attributes = ensureAttribute(attributes, "data-law-kind", "chapter");
+      attributes = ensureAttribute(attributes, "data-law-align", "center");
+
+      return `<h3${attributes}>${formatChapterHeadingInner(inner)}</h3>`;
+    }
+  );
+
+  return mergeAdjacentLawLists(normalizedChapters);
 }
 
 function slugify(value: string, index: number) {
@@ -336,8 +394,21 @@ export function legalPlainTextToHtml(
       flushLists();
       insideArticle = false;
       hasStructuredHeading = true;
+      const chapter = splitChapterHeading(line);
       html.push(
-        `<h3 data-law-kind="chapter" data-law-align="center">${coloredText(line, settings.chapterColor)}</h3>`
+        `<h3 data-law-kind="chapter" data-law-align="center">${
+          chapter
+            ? `<span data-law-chapter-prefix="true" style="color: ${escapeAttribute(
+                settings.chapterColor
+              )}">${escapeHtml(chapter.prefix)}</span>${
+                chapter.title
+                  ? ` <span data-law-chapter-title="true" style="color: #f4f4f5">${escapeHtml(
+                      chapter.title
+                    )}</span>`
+                  : ""
+              }`
+            : coloredText(line, settings.chapterColor)
+        }</h3>`
       );
       continue;
     }

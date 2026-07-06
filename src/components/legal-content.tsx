@@ -1,3 +1,4 @@
+import { normalizeLawStructureHtml } from "@/lib/laws-content";
 import styles from "./legal-content.module.css";
 
 type LegalContentProps = {
@@ -12,14 +13,16 @@ function prepareHtml(value: string) {
 
   const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(value);
 
-  if (hasHtmlTags) return value;
+  if (hasHtmlTags) return normalizeLawStructureHtml(value);
 
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map((item) => `<p>${item}</p>`)
-    .join("");
+  return normalizeLawStructureHtml(
+    value
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => `<p>${item}</p>`)
+      .join("")
+  );
 }
 
 export default function LegalContent({ html, compact = false }: LegalContentProps) {
