@@ -546,7 +546,7 @@ export default function TextEditor({
     );
 
     const prefix = node.textContent.match(
-      /^\s*(Статья\s+\d+(?:\.\d+)?\.?)/i
+      /^\s*((?:Статья\s+\d+(?:\.\d+)?\.?)|(?:\d+(?:\.\d+)?\.))/i
     );
     if (!prefix) return;
 
@@ -556,6 +556,44 @@ export default function TextEditor({
       prefixStart + prefix[1].length,
       textStyle.create({ color: prefixColor })
     );
+  }
+
+  function applyPartFormatting(
+    transaction: Transaction,
+    node: ProseMirrorNode,
+    position: number,
+    prefixColor: string
+  ) {
+    const match = node.textContent.match(
+      /^\s*((?:ч(?:асть)?\.?\s*)\d+(?:\.\d+)?\.?)(?:\s+|$)(.*)$/i
+    );
+    const textStyle = transaction.doc.type.schema.marks.textStyle;
+    const italic = transaction.doc.type.schema.marks.italic;
+    if (!match || !textStyle) return;
+
+    const contentFrom = position + 1;
+    const prefixIndex = node.textContent.indexOf(match[1]);
+    const prefixFrom = contentFrom + Math.max(0, prefixIndex);
+    const prefixTo = prefixFrom + match[1].length;
+
+    transaction.addMark(
+      prefixFrom,
+      prefixTo,
+      textStyle.create({ color: prefixColor })
+    );
+
+    if (italic) {
+      transaction.removeMark(prefixFrom, prefixTo, italic);
+
+      if (match[2]) {
+        const bodyIndex = node.textContent.lastIndexOf(match[2]);
+        const bodyFrom = contentFrom + Math.max(0, bodyIndex);
+        const bodyTo = contentFrom + node.content.size;
+        if (bodyFrom < bodyTo) {
+          transaction.addMark(bodyFrom, bodyTo, italic.create());
+        }
+      }
+    }
   }
 
   function applyPrefixColor(
@@ -707,9 +745,11 @@ export default function TextEditor({
           lawAlign: node.attrs.lawAlign || "left",
           lawKind: kind,
           lawToc: node.attrs.lawToc || null,
-          lawListColor: kind === "subpoint" ? legalListColor : null,
+          lawListColor: legalListColor,
         });
-        if (kind === "subpoint") {
+        if (kind === "part") {
+          applyPartFormatting(transaction, node, position, legalListColor);
+        } else {
           applyPrefixColor(transaction, node, position, legalListColor);
         }
         continue;
@@ -752,7 +792,13 @@ export default function TextEditor({
       const kind = node.attrs.lawKind as LegalBlockKind | null;
       const isSection = kind === "section" || /^РАЗДЕЛ\s+/i.test(title);
       const isChapter = kind === "chapter" || /^ГЛАВА\s+/i.test(title);
-      const isArticle = kind === "article" || /^Статья\s+\d/i.test(title);
+      const isArticle =
+        kind === "article" ||
+        /^Статья\s+\d/i.test(title) ||
+        /^\d+(?:\.\d+)?\.\s+/.test(title);
+      const isPart =
+        kind === "part" ||
+        /^(?:ч(?:асть)?\.?\s*)\d+(?:\.\d+)?\.?(?:\s+|$)/i.test(title);
       const isSubpoint =
         kind === "subpoint" || /^[а-яёa-z]\)(?:\s+|$)/i.test(title);
 
@@ -798,6 +844,16 @@ export default function TextEditor({
         return;
       }
 
+      if (isPart && node.type.name === "paragraph") {
+        transaction.setNodeMarkup(position, undefined, {
+          ...node.attrs,
+          lawKind: "part",
+          lawListColor: activeListColor,
+        });
+        applyPartFormatting(transaction, node, position, activeListColor);
+        return false;
+      }
+
       if (isSubpoint && node.type.name === "paragraph") {
         transaction.setNodeMarkup(position, undefined, {
           ...node.attrs,
@@ -827,7 +883,10 @@ export default function TextEditor({
     state.doc.forEach((node, offset) => {
       const title = node.textContent.trim();
       const kind = node.attrs.lawKind as LegalBlockKind | null;
-      const startsArticle = kind === "article" || /^Статья\s+\d/i.test(title);
+      const startsArticle =
+        kind === "article" ||
+        /^Статья\s+\d/i.test(title) ||
+        /^\d+(?:\.\d+)?\.\s+/.test(title);
       const closesArticle =
         kind === "section" ||
         kind === "chapter" ||

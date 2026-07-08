@@ -62,7 +62,7 @@ export default function AdminLawsPage() {
   const [legalChapterColor, setLegalChapterColor] = useState("#f4f4f5");
   const [legalArticleColor, setLegalArticleColor] = useState("#ef4444");
   const [legalListColor, setLegalListColor] = useState("#ef4444");
-  const [italicizeImportedArticles, setItalicizeImportedArticles] = useState(false);
+  const [italicizeImportedArticles, setItalicizeImportedArticles] = useState(true);
   const [updateUpdatedAt, setUpdateUpdatedAt] = useState(true);
 
   const [message, setMessage] = useState("");
@@ -570,7 +570,7 @@ export default function AdminLawsPage() {
               </label>
 
               <label>
-                <span>Цвет списков и подпунктов</span>
+                <span>Цвет частей, списков и подпунктов</span>
                 <div>
                   <input
                     type="color"
@@ -594,9 +594,9 @@ export default function AdminLawsPage() {
             </div>
 
             <div className={styles.importHint}>
-              Умный импорт распознаёт римские и обычные номера глав, центрирует
-              названия и главы, оставляет статьи слева и создаёт содержание только
-              из глав.
+              Умный импорт распознаёт главы, статьи, форматы «ч. 1.», «ч1»,
+              нумерованные и маркированные списки. Номер части получает выбранный
+              цвет, а её текст — курсив. Содержание создаётся только из глав.
             </div>
 
             <textarea

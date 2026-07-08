@@ -380,3 +380,45 @@
 .editor :global(.ProseMirror [data-law-kind="subpoint"]) > b:first-child {
   color: var(--law-list-color, inherit);
 }
+
+
+/* Tailwind сбрасывает list-style. В редакторе маркеры должны быть видны сразу. */
+.editor :global(.ProseMirror ul),
+.editor :global(.ProseMirror ol) {
+  display: block !important;
+  padding-inline-start: 30px !important;
+}
+
+.editor :global(.ProseMirror ul) {
+  list-style: disc outside !important;
+}
+
+.editor :global(.ProseMirror ol) {
+  list-style: decimal outside !important;
+}
+
+.editor :global(.ProseMirror li) {
+  display: list-item !important;
+  margin: 7px 0;
+  padding-left: 4px;
+}
+
+.editor :global(.ProseMirror ol ol) {
+  list-style-type: lower-alpha !important;
+}
+
+.editor :global(.ProseMirror ol ol ol) {
+  list-style-type: lower-roman !important;
+}
+
+.editor :global(.ProseMirror [data-law-kind="part"]) {
+  --law-list-color: #ef4444;
+}
+
+.editor :global(.ProseMirror [data-law-kind="part"] [data-law-part-prefix="true"]),
+.editor :global(.ProseMirror [data-law-kind="part"] > strong:first-child),
+.editor :global(.ProseMirror [data-law-kind="part"] > b:first-child) {
+  color: var(--law-list-color, #ef4444);
+  font-style: normal;
+  font-weight: 1000;
+}

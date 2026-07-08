@@ -15,7 +15,7 @@ export const DEFAULT_LEGAL_IMPORT_OPTIONS: Required<LegalImportOptions> = {
   chapterColor: "#f4f4f5",
   articleColor: "#ef4444",
   listColor: "#ef4444",
-  italicizeArticleBody: false,
+  italicizeArticleBody: true,
 };
 
 function decodeHtmlEntities(value: string) {
@@ -129,7 +129,7 @@ function isArticleTitle(value: string) {
 
 function splitArticleHeading(value: string) {
   const match = value.match(
-    /^\s*(Статья\s+\d+(?:\.\d+)?\.?)(?:\s+|$)(.*)$/i
+    /^\s*((?:Статья\s+\d+(?:\.\d+)?\.?)|(?:\d+(?:\.\d+)?\.))(?:\s+|$)(.*)$/i
   );
 
   if (!match) return null;
@@ -161,6 +161,53 @@ function formatArticleHeadingInner(
           parts.title
         )}</span>`
       : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+
+function splitPartHeading(value: string) {
+  const match = value.match(
+    /^\s*((?:ч(?:асть)?\.?\s*)\d+(?:\.\d+)?\.?)(?:\s+|$)(.*)$/i
+  );
+
+  if (!match) return null;
+
+  return {
+    prefix: match[1].trim(),
+    body: match[2].trim(),
+  };
+}
+
+function extractAttributeValue(
+  attributes: string,
+  name: string,
+  fallback: string
+) {
+  const expression = new RegExp(
+    `${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
+    "i"
+  );
+  const match = attributes.match(expression);
+  return match?.[1] || match?.[2] || match?.[3] || fallback;
+}
+
+function formatPartHeadingInner(
+  value: string,
+  prefixColor = DEFAULT_LEGAL_IMPORT_OPTIONS.listColor
+) {
+  if (/data-law-part-prefix=/i.test(value)) return value;
+
+  const plain = stripTags(value);
+  const parts = splitPartHeading(plain);
+  if (!parts) return value;
+
+  return [
+    `<span data-law-part-prefix="true" style="color: ${escapeAttribute(
+      prefixColor
+    )}"><strong>${escapeHtml(parts.prefix)}</strong></span>`,
+    parts.body ? `<em>${escapeHtml(parts.body)}</em>` : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -203,10 +250,36 @@ export function normalizeLawStructureHtml(html: string) {
         return `<h3${attributes}>${formatChapterHeadingInner(inner)}</h3>`;
       }
 
-      if (isArticleTitle(title)) {
+      const isMarkedArticle =
+        /data-law-kind\s*=\s*["']article["']/i.test(attributes);
+
+      if ((isMarkedArticle || isArticleTitle(title)) && splitArticleHeading(title)) {
         attributes = ensureAttribute(attributes, "data-law-kind", "article");
         attributes = ensureAttribute(attributes, "data-law-align", "left");
         return `<h4${attributes}>${formatArticleHeadingInner(inner)}</h4>`;
+      }
+
+      const part = splitPartHeading(title);
+      const isMarkedPart =
+        /data-law-kind\s*=\s*["']part["']/i.test(attributes);
+
+      if (part || isMarkedPart) {
+        const listColor = extractAttributeValue(
+          attributes,
+          "data-law-list-color",
+          DEFAULT_LEGAL_IMPORT_OPTIONS.listColor
+        );
+        attributes = ensureAttribute(attributes, "data-law-kind", "part");
+        attributes = ensureAttribute(attributes, "data-law-align", "left");
+        attributes = ensureAttribute(
+          attributes,
+          "data-law-list-color",
+          listColor
+        );
+        return `<p${attributes}>${formatPartHeadingInner(
+          inner,
+          listColor
+        )}</p>`;
       }
 
       return full;
@@ -231,7 +304,11 @@ export function normalizeLawStructureHtml(html: string) {
     /<h4([^>]*)>([\s\S]*?)<\/h4>/gi,
     (full, rawAttributes: string, inner: string) => {
       const title = stripTags(inner);
-      if (!isArticleTitle(title)) return full;
+      const markedArticle =
+        /data-law-kind\s*=\s*["']article["']/i.test(rawAttributes || "");
+      if ((!markedArticle && !isArticleTitle(title)) || !splitArticleHeading(title)) {
+        return full;
+      }
 
       let attributes = rawAttributes || "";
       attributes = ensureAttribute(attributes, "data-law-kind", "article");
@@ -501,16 +578,16 @@ export function legalPlainTextToHtml(
       continue;
     }
 
-    const partMatch = line.match(/^(ч\.\s*\d+(?:\.\d+)?)(?:\s+|$)(.*)$/i);
+    const part = splitPartHeading(line);
 
-    if (partMatch) {
+    if (part) {
       flushLists();
       html.push(
-        `<p data-law-kind="part"><strong>${escapeHtml(partMatch[1])}</strong>${
-          partMatch[2]
-            ? ` ${wrapBodyText(partMatch[2], settings.italicizeArticleBody)}`
-            : ""
-        }</p>`
+        `<p data-law-kind="part" data-law-align="left" data-law-list-color="${escapeAttribute(
+          settings.listColor
+        )}" style="--law-list-color: ${escapeAttribute(
+          settings.listColor
+        )}">${formatPartHeadingInner(line, settings.listColor)}</p>`
       );
       continue;
     }
