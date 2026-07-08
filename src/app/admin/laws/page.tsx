@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import LegalContent from "@/components/legal-content";
+import LawForumExport from "@/components/law-forum-export";
 import TextEditor from "@/components/text-editor";
 import {
   getLawArticleCount,
@@ -639,6 +640,23 @@ export default function AdminLawsPage() {
               onLegalArticleColorChange={setLegalArticleColor}
               onLegalListColorChange={setLegalListColor}
             />
+
+            <div className={styles.forumExportRow}>
+              <div>
+                <b>Перенос на форум</b>
+                <span>
+                  Копирует текущую версию документа вместе с цветами, курсивом,
+                  выравниванием и списками — сохранять закон перед экспортом не обязательно.
+                </span>
+              </div>
+              <LawForumExport
+                title={title}
+                subtitle={subtitle}
+                number={number}
+                version={version}
+                contentHtml={contentHtml}
+              />
+            </div>
           </div>
 
           {message && (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import LegalContent from "@/components/legal-content";
+import LawForumExport from "@/components/law-forum-export";
 import WikiTopActions from "@/components/wiki-top-actions";
 import {
   addLawHeadingAnchors,
@@ -337,6 +338,13 @@ export default function LawsPage() {
                 </div>
 
                 <div className={styles.documentActions}>
+                  <LawForumExport
+                    title={activeDocument.title}
+                    subtitle={activeDocument.subtitle}
+                    number={activeDocument.number}
+                    version={activeDocument.version}
+                    contentHtml={activeDocument.contentHtml}
+                  />
                   <button type="button" onClick={copyDocumentLink}>
                     {copied ? "Ссылка скопирована" : "Скопировать ссылку"}
                   </button>
